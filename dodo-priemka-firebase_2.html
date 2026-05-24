@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#FF6900">
+<title>Приёмка — Додо Пицца</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#F4F4F4;
+  --surface:#FFFFFF;
+  --surface2:#F8F8F8;
+  --orange:#FF6900;
+  --orange-l:#FFF0E6;
+  --orange-d:#E05500;
+  --text:#1C1C1E;
+  --text2:#8E8E93;
+  --border:#E5E5EA;
+  --green:#34C759;
+  --green-l:#E8F8EE;
+  --red:#FF3B30;
+  --red-l:#FFF0EF;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+  --shadow-sm:0 1px 4px rgba(0,0,0,.06);
+  --r:14px;
+}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',system-ui,-apple-system,sans-serif;min-height:100vh}
+#root{display:flex;flex-direction:column;min-height:100vh;max-width:520px;margin:0 auto}
+
+/* INPUTS */
+.inp{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-size:15px;font-family:inherit;padding:12px 14px;outline:none;transition:border-color .15s}
+.inp:focus{border-color:var(--orange);background:var(--surface)}
+.inp::placeholder{color:var(--text2)}
+.label{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px;display:block;letter-spacing:.4px;text-transform:uppercase}
+
+/* BUTTONS */
+.btn{border:none;border-radius:var(--r);font-size:15px;font-weight:800;padding:14px 20px;cursor:pointer;width:100%;display:block;font-family:inherit;transition:transform .1s,opacity .1s;letter-spacing:.2px}
+.btn:active{transform:scale(.97);opacity:.9}
+.btn-primary{background:var(--orange);color:#fff}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1.5px solid var(--border)}
+.btn-danger{background:var(--red-l);color:var(--red);border:1.5px solid var(--red)}
+.btn-outline{background:transparent;color:var(--orange);border:2px solid var(--orange)}
+.card{background:var(--surface);border-radius:16px;padding:18px;margin-bottom:12px;box-shadow:var(--shadow-sm)}
+
+/* HEADER */
+.header{background:var(--orange);padding:0 16px;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:10}
+.header-logo{display:flex;align-items:center;gap:10px}
+.logo-badge{background:#fff;color:var(--orange);font-size:13px;font-weight:800;border-radius:8px;padding:4px 8px;letter-spacing:.5px}
+.header-title{color:#fff;font-size:14px;font-weight:700;opacity:.9}
+.header-right{display:flex;align-items:center;gap:8px}
+.hbtn{background:rgba(255,255,255,.2);border:none;color:#fff;font-size:13px;font-weight:700;border-radius:20px;padding:5px 12px;cursor:pointer;font-family:inherit}
+.hbtn:active{opacity:.8}
+.hbtn-ghost{background:transparent;border:1.5px solid rgba(255,255,255,.5);color:#fff;font-size:12px;font-weight:700;border-radius:20px;padding:4px 10px;cursor:pointer;font-family:inherit}
+.accepted-badge{background:#fff;color:var(--orange);font-size:12px;font-weight:800;border-radius:20px;padding:4px 10px;cursor:pointer}
+
+/* TABS */
+.tabs{background:var(--surface);border-bottom:1.5px solid var(--border);display:flex;flex-shrink:0}
+.tab{flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:700;color:var(--text2);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1.5px;transition:color .15s,border-color .15s;font-family:inherit}
+.tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+
+/* LIST */
+.search-bar{padding:12px 14px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:58px;z-index:5}
+.search-bar input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:24px;color:var(--text);font-size:14px;font-family:inherit;padding:9px 16px 9px 38px;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238E8E93' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center}
+.search-bar input:focus{border-color:var(--orange);background-color:var(--surface)}
+.search-bar input::placeholder{color:var(--text2)}
+.section-lbl{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--text2);padding:10px 16px 4px;text-transform:uppercase;background:var(--bg)}
+.item{display:flex;align-items:center;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface);transition:background .1s;gap:12px}
+.item:active{background:var(--orange-l)}
+.item.done{background:var(--green-l)}
+.item-icon{width:36px;height:36px;border-radius:10px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--text2);flex-shrink:0;font-family:monospace}
+.item.done .item-icon{background:var(--green);color:#fff}
+.item-info{flex:1;min-width:0}
+.item-code{font-size:10px;color:var(--text2);font-family:monospace;margin-bottom:2px}
+.item-name{font-size:14px;font-weight:600;line-height:1.35;word-break:break-word;color:var(--text)}
+.item-qty{background:var(--orange);color:#fff;font-size:11px;font-weight:800;border-radius:20px;padding:4px 10px;white-space:nowrap;flex-shrink:0}
+.item.done .item-qty{background:var(--green)}
+.chevron{color:var(--text2);font-size:18px;flex-shrink:0}
+
+/* PANEL */
+.panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:none;backdrop-filter:blur(2px)}
+.panel{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--surface);border-radius:20px 20px 0 0;padding:8px 16px 32px;z-index:51;display:none;box-shadow:0 -4px 30px rgba(0,0,0,.12)}
+.panel-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.panel-name{font-size:15px;font-weight:700;line-height:1.4;margin-bottom:3px;color:var(--text)}
+.panel-code{font-size:11px;color:var(--text2);font-family:monospace;margin-bottom:16px}
+.unit-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px}
+.unit-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text2);font-size:14px;font-weight:700;padding:9px 0;cursor:pointer;text-align:center;font-family:inherit;transition:all .1s}
+.unit-btn.sel{background:var(--orange-l);border-color:var(--orange);color:var(--orange)}
+.unit-btn:active{opacity:.8}
+.panel-row{display:flex;gap:8px}
+.num-inp{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;color:var(--text);font-size:26px;font-weight:800;padding:12px;outline:none;text-align:center;font-family:inherit;transition:border-color .15s}
+.num-inp:focus{border-color:var(--orange);background:var(--surface)}
+
+/* SUMMARY */
+.sum-item{display:flex;align-items:flex-start;gap:10px;padding:13px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
+.sum-n{font-size:11px;font-weight:700;color:var(--text2);min-width:22px;text-align:right;padding-top:2px}
+.sum-info{flex:1}
+.sum-code{font-size:10px;color:var(--text2);font-family:monospace;margin-bottom:2px}
+.sum-name{font-size:14px;font-weight:600;line-height:1.3;color:var(--text)}
+.sum-qty{font-size:16px;font-weight:800;color:var(--orange);white-space:nowrap}
+.bottom-bar{padding:12px 16px 24px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+
+/* CATALOG */
+.cat-item{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface);gap:12px}
+.cat-item:active{background:var(--orange-l)}
+.cat-avatar{width:36px;height:36px;border-radius:10px;background:var(--orange-l);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:var(--orange);flex-shrink:0;font-family:monospace}
+.cat-info{flex:1;min-width:0}
+.cat-code{font-size:10px;color:var(--text2);font-family:monospace;margin-bottom:2px}
+.cat-name{font-size:14px;font-weight:600;line-height:1.3;word-break:break-word;color:var(--text)}
+.cat-unit{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-size:11px;font-weight:700;color:var(--text2);padding:2px 8px;margin-top:3px}
+.cat-edit-btn{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text2);width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:15px}
+.cat-edit-btn:active{background:var(--orange-l);border-color:var(--orange)}
+.cat-add-fab{position:sticky;bottom:24px;left:0;right:0;display:flex;justify-content:center;padding:0 16px;pointer-events:none;margin-top:-20px}
+.cat-add-fab button{pointer-events:all;background:var(--orange);color:#fff;border:none;border-radius:30px;font-size:15px;font-weight:800;padding:14px 28px;cursor:pointer;font-family:inherit;box-shadow:0 4px 20px rgba(255,105,0,.4)}
+.cat-add-fab button:active{transform:scale(.96)}
+.cat-count-bar{padding:8px 16px;background:var(--bg);font-size:12px;font-weight:700;color:var(--text2);border-bottom:1px solid var(--border)}
+.edit-panel{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--surface);border-radius:20px 20px 0 0;padding:8px 16px 36px;z-index:52;display:none;box-shadow:0 -4px 30px rgba(0,0,0,.15)}
+.edit-panel-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.edit-panel-title{font-size:16px;font-weight:800;margin-bottom:16px;color:var(--text)}
+
+/* SCREENS */
+.screen{padding:24px 16px 40px;flex:1;background:var(--bg)}
+.screen-logo{text-align:center;margin-bottom:28px}
+.screen-logo-box{display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;background:var(--orange);border-radius:20px;box-shadow:0 4px 20px rgba(255,105,0,.3);margin-bottom:14px}
+.screen-title{font-size:24px;font-weight:800;text-align:center;margin-bottom:6px;color:var(--text)}
+.screen-sub{font-size:14px;color:var(--text2);text-align:center;margin-bottom:28px;line-height:1.6}
+
+/* ROLE BUTTONS */
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.role-btn{background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:16px 10px;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit}
+.role-btn:active{transform:scale(.96)}
+.role-btn.sel{border-color:var(--orange);background:var(--orange-l)}
+.role-icon{font-size:28px;margin-bottom:6px}
+.role-label{font-size:14px;font-weight:800;color:var(--text)}
+.role-desc{font-size:11px;color:var(--text2);margin-top:2px}
+.role-btn.sel .role-label{color:var(--orange)}
+
+/* MANAGER */
+.session-card{margin:10px 14px;background:var(--surface);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden;cursor:pointer;transition:transform .1s,box-shadow .1s}
+.session-card:active{transform:scale(.98);box-shadow:none}
+.session-head{padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+.session-top{display:flex;align-items:center;gap:10px}
+.session-avatar{width:42px;height:42px;border-radius:12px;background:var(--orange-l);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.session-pizzeria{font-size:16px;font-weight:800;color:var(--text)}
+.session-meta{font-size:12px;color:var(--text2);margin-top:2px;font-weight:600}
+.session-count{background:var(--orange);color:#fff;font-size:13px;font-weight:800;border-radius:20px;padding:5px 12px;white-space:nowrap}
+.session-count.zero{background:var(--surface2);color:var(--text2)}
+.session-count.done-badge{background:var(--green);color:#fff}
+.session-status{display:flex;align-items:center;gap:6px;padding:8px 16px 12px;border-top:1px solid var(--border)}
+.dot-live{display:inline-block;width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite;flex-shrink:0}
+.dot-done{display:inline-block;width:7px;height:7px;background:var(--green);border-radius:50%;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+.status-text{font-size:12px;font-weight:700;color:var(--text2)}
+.manager-header-bar{padding:12px 14px 4px;display:flex;align-items:center;justify-content:space-between}
+.manager-header-bar span{font-size:13px;font-weight:700;color:var(--text2)}
+.sessions-empty{text-align:center;padding:60px 24px;color:var(--text2)}
+.sessions-empty-icon{font-size:48px;margin-bottom:14px}
+
+/* SESSION DETAIL */
+.session-detail-header{background:var(--orange);padding:16px;color:#fff}
+.sdh-back{background:rgba(255,255,255,.2);border:none;color:#fff;font-size:22px;width:36px;height:36px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;margin-bottom:10px}
+.sdh-title{font-size:20px;font-weight:800;margin-bottom:4px}
+.sdh-meta{font-size:13px;opacity:.85;font-weight:600}
+.sdh-count{display:inline-block;background:rgba(255,255,255,.25);border-radius:20px;padding:4px 12px;font-size:13px;font-weight:800;margin-top:8px}
+
+/* SETUP */
+.setup-step{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.step-num{width:26px;height:26px;border-radius:50%;background:var(--orange);color:#fff;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-text{font-size:14px;color:var(--text);line-height:1.5;font-weight:600}
+.step-text b{color:var(--orange)}
+.code-block{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-family:monospace;font-size:13px;color:var(--text);margin-top:4px}
+
+/* TOAST */
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;font-size:14px;font-weight:700;padding:11px 22px;border-radius:30px;z-index:200;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;font-family:inherit}
+#toast.show{opacity:1}
+
+/* SPINNER */
+.spinner{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 24px;gap:16px;color:var(--text2);font-size:14px;font-weight:600;flex:1}
+.spin{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:60px 24px;color:var(--text2);font-size:14px;font-weight:600}
+
+::-webkit-scrollbar{width:0}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="panel-overlay" id="overlay" onclick="closePanel();closeEditPanel()"></div>
+<div class="panel" id="panel">
+  <div class="panel-handle"></div>
+  <div class="panel-name" id="p-name"></div>
+  <div class="panel-code" id="p-code"></div>
+  <div style="margin-bottom:16px">
+    <div class="label">Количество</div>
+    <input class="num-inp" id="p-qty" type="number" inputmode="decimal" min="0" step="any" placeholder="0">
+  </div>
+  <div style="margin-bottom:16px">
+    <div class="label">Единица</div>
+    <div class="unit-grid" id="p-units"></div>
+  </div>
+  <div class="panel-row">
+    <button class="btn btn-secondary" style="flex:1" onclick="closePanel()">Отмена</button>
+    <button class="btn btn-danger" style="flex:1" id="p-del" onclick="delItem()">Удалить</button>
+    <button class="btn btn-primary" style="flex:2" onclick="saveItem()">Сохранить ✓</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+function loadScript(src){
+  return new Promise((resolve,reject)=>{
+    const s=document.createElement('script');s.src=src;
+    s.onload=resolve;s.onerror=()=>reject(new Error('Не удалось загрузить: '+src));
+    document.head.appendChild(s);
+  });
+}
+async function loadFirebase(){
+  try{
+    await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+    await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js');
+    boot();
+  }catch(e){
+    document.getElementById('root').innerHTML=`
+      <div class="screen" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center">
+        <div style="font-size:48px;margin-bottom:16px">📡</div>
+        <div style="font-size:20px;font-weight:800;margin-bottom:10px">Нет интернета</div>
+        <div style="font-size:14px;color:var(--text2);margin-bottom:24px;line-height:1.6">Для первого запуска нужен интернет.<br>Проверьте соединение и обновите страницу.</div>
+        <button onclick="location.reload()" class="btn btn-primary">Обновить страницу</button>
+      </div>`;
+  }
+}
+document.addEventListener('DOMContentLoaded',loadFirebase);
+</script>
+
+<script>
+const EMBEDDED_CONFIG = {
+  "apiKey": "AIzaSyCicodnIZBN1BGPvQE9l1Pe8b631yIhbvM",
+  "authDomain": "ref-dodo.firebaseapp.com",
+  "projectId": "ref-dodo",
+  "storageBucket": "ref-dodo.firebasestorage.app",
+  "messagingSenderId": "41840869236",
+  "appId": "1:41840869236:web:ddc960ab3661e98a0af621",
+  "measurementId": "G-C5E432Q0EW"
+};
+
+const UNITS=['кор','бл','шт','кг','уп','л','рол','пак'];
+const LS_CFG='dodo_fb_cfg',LS_PRODUCTS='dodo_products_v2',LS_SESSION='dodo_session_id',LS_ROLE='dodo_role',LS_NAME='dodo_user_name';
+
+const DEFAULT_PRODUCTS=[
+  {c:'DDI_001752',n:'Пита пшеничная',u:'кор'},{c:'DDI_001602',n:'Говядина пряная «Пряная говядина» 3 кг',u:'кор'},
+  {c:'DDI_001699',n:'Коробка для пиццы 25 см',u:'бл'},{c:'DDI_001698',n:'Коробка для пиццы 30 см',u:'бл'},
+  {c:'DDI_001697',n:'Коробка для пиццы 35 см',u:'бл'},{c:'DDI_000629',n:'Ананасы кусочки 580 мл (24 банки)',u:'кор'},
+  {c:'DDI_001944',n:'Бахилы одноразовые 100 шт',u:'уп'},{c:'DDI_001435',n:'Бекон 10 шт×0,5 кг',u:'кор'},
+  {c:'DDI_000946',n:'Креветки белоногие очищенные 4,5 кг',u:'кор'},{c:'DDI_001686',n:'Варенье малиновое порционное 120 шт',u:'кор'},
+  {c:'DDI_000269',n:'Ветчина 10 шт×0,5 кг',u:'кор'},{c:'DDI_000772',n:'Вилка в инд. упак. 500 шт',u:'кор'},
+  {c:'DDI_000910',n:'Держатель для двух стаканов 150 шт',u:'кор'},{c:'DDI_001164',n:'Маффин «Солёная карамель» 20 шт',u:'кор'},
+  {c:'DDI_001239',n:'Наггетсы куриные 12 кг',u:'кор'},{c:'DDI_000833',n:'Картофель фри 5 шт×2,5 кг',u:'кор'},
+  {c:'DDI_001054',n:'Картофельные дольки 5 шт×2,5 кг',u:'кор'},{c:'DDI_001484',n:'Колбаски классические 12 шт×0,5 кг',u:'кор'},
+  {c:'DDI_001338',n:'Перец халапеньо 6 банок×3100 мл',u:'кор'},{c:'DDI_000995',n:'Пицца-соус 10 кг',u:'кор'},
+  {c:'DDI_002219',n:'Концентрат «Груша-Фейхоа» 1 л',u:'шт'},{c:'DDI_002217',n:'Концентрат «Голубика-Лайм-Мята» 1 л',u:'шт'},
+  {c:'DDI_001309',n:'Концентрат «Клубничный мохито» 1 л',u:'шт'},{c:'DDI_001872',n:'Концентрат «Лимон-Мята» 1 л',u:'шт'},
+  {c:'DDI_001907',n:'Концентрат «Фисташка» 1 л',u:'шт'},{c:'DDI_001257',n:'Какао 26 г 90 шт',u:'кор'},
+  {c:'DDI_001996',n:'Основа для пиццы (Римская) 0,24 кг 10 шт',u:'кор'},{c:'DDI_001969',n:'Хешбрауны картофельные 5 уп×2500 г',u:'кор'},
+  {c:'DDI_001058',n:'Кофе-зерно 20 шт×500 г',u:'кор'},{c:'DDI_001608',n:'Креветки в панировке жареные 6 уп×700 г',u:'кор'},
+  {c:'DDI_000117',n:'Крупка — мука из твёрдой пшеницы 5 кг',u:'шт'},{c:'DDI_001709',n:'Крышка плоская для коктейля 1000 шт',u:'кор'},
+  {c:'DDI_001704',n:'Крышка для кофе 0,2 л — 1000 шт',u:'кор'},{c:'DDI_001148',n:'Крышка для кофе 0,3 и 0,4 л — 1000 шт',u:'кор'},
+  {c:'DDI_001999',n:'Кубики свиной шейки «Шашлычные» 6 уп×0,5 кг',u:'кор'},{c:'DDI_001011',n:'Филе цыплёнка Халяль 12 кг',u:'кор'},
+  {c:'DDI_000771',n:'Ложка столовая в инд. упак. 500 шт',u:'кор'},{c:'DDI_001743',n:'Паста 18 уп×120 г',u:'кор'},
+  {c:'DDI_000527',n:'Маффин «Три шоколада» 20 шт',u:'кор'},{c:'DDI_001227',n:'Мешки для мусора 60 л',u:'кор'},
+  {c:'DDI_001034',n:'Молоко 3,2% «Эко Нива» 1 л 12 шт',u:'кор'},{c:'DDI_001259',n:'Сгущёнка в стиках 7 г 100 шт',u:'бл'},
+  {c:'DDI_001979',n:'Пломбир «Додокрошка» 16 шт',u:'кор'},{c:'DDI_000489',n:'Мороженое для молочного коктейля 30 шт×140 г',u:'кор'},
+  {c:'DDI_001425',n:'Морс ягодный «Вишня» 18 шт×0,45 л',u:'кор'},{c:'DDI_001419',n:'Морс ягодный «Клюква» 18 шт×0,45 л',u:'кор'},
+  {c:'DDI_001426',n:'Морс «Чёрная смородина» 18 шт×0,45 л',u:'кор'},{c:'DDI_000813',n:'Колбаса «Пепперони» 8 кг',u:'кор'},
+  {c:'DDI_000437',n:'Колбаса «Чоризо» 8×1 кг',u:'кор'},{c:'DDI_001562',n:'Печенье «Орео» какао-ваниль 228 г×12 уп',u:'кор'},
+  {c:'DDI_001844',n:'Кукис шоколадный с глазурью 28 шт',u:'кор'},{c:'DDI_002022',n:'Пирог «Зелёное Яблоко Крамбл» 18 шт',u:'кор'},
+  {c:'DDI_001528',n:'Пирожное «Тирамису» 12 шт×90 г',u:'уп'},{c:'DDI_001938',n:'Пирожное «Муравьёшки» 16 шт×60 г',u:'кор'},
+  {c:'DDI_002248',n:'Пирожное «Лимончелло» 12 шт',u:'кор'},{c:'DDI_001609',n:'Полотенца бумажные V-образные 250 л×15 уп',u:'кор'},
+  {c:'DDI_000760',n:'Салфетки бумажные 100 шт×24 упак',u:'кор'},{c:'DDI_001157',n:'Сахар порционный 1000 шт',u:'кор'},
+  {c:'DDI_001244',n:'Сироп Classic карамель Gourmix 1 л',u:'шт'},{c:'DDI_001243',n:'Сироп для кофе «Орех» 1 л',u:'шт'},
+  {c:'DDI_001146',n:'Сироп для кофе «Кокос» 1000 мл',u:'шт'},{c:'DDI_000920',n:'Смесь для коктейля «Клубника» 1 л',u:'шт'},
+  {c:'DDI_000174',n:'Смесь сыров Чеддар и Пармезан 10 шт×500 г',u:'кор'},{c:'DDI_000829',n:'Соль порционная 1000 шт',u:'кор'},
+  {c:'DDI_001182',n:'Соус порционный «Барбекю Додо» 120 шт×25 г',u:'кор'},{c:'DDI_001967',n:'Соус майонезный «1000 островов» 120 шт×25 г',u:'кор'},
+  {c:'DDI_001542',n:'Соус майон. «Бургер» 4 шт×1 кг',u:'кор'},{c:'DDI_001823',n:'Соус майонезный «Гриль» 15 шт×0,25 кг',u:'кор'},
+  {c:'DDI_001545',n:'Соус «Ранч» 4 кг',u:'кор'},{c:'DDI_001181',n:'Соус порционный «Сырный Додо» 120 шт×25 г',u:'кор'},
+  {c:'DDI_001101',n:'Соус «Сырный» 4,5 кг',u:'кор'},{c:'DDI_001612',n:'Соус майонезный «Цезарь» 100 шт×30 г',u:'кор'},
+  {c:'DDI_001180',n:'Соус порционный «Ранч Додо» 120 шт×25 г',u:'кор'},{c:'DDI_002052',n:'Соус майон. «Том Ям» 15 шт×0,25 кг',u:'кор'},
+  {c:'DDI_000997',n:'Соус «Альфредо» 4 шт×1 кг',u:'кор'},{c:'DDI_001930',n:'Соус «Масала» 15 шт×0,25 кг',u:'кор'},
+  {c:'DDI_001544',n:'Соус «Песто» 4 кг',u:'кор'},{c:'DDI_001885',n:'Соус «Барбекю» 6 шт×1 кг',u:'кор'},
+  {c:'DDI_001708',n:'Стакан для коктейля 0,3 л 300 шт',u:'кор'},{c:'DDI_001710',n:'Стакан для коктейля 0,6 л 200 шт',u:'кор'},
+  {c:'DDI_002086',n:'Сыр Моцарелла кубик 10 шт×1 кг',u:'кор'},{c:'DDI_000464',n:'Сыр Фета Брынза «Comella» 35%',u:'кор'},
+  {c:'DDI_002147',n:'Сырники замороженные 7 кг / 5 уп×1,4 кг',u:'кор'},{c:'DDI_000568',n:'Тортильи замороженные 10 уп×12 шт',u:'кор'},
+  {c:'DDI_002096',n:'Мини-тортилья 192 шт (16 уп×12 шт)',u:'кор'},{c:'DDI_001479',n:'Фольга алюминиевая 30 см 60 м×12 рул.',u:'кор'},
+  {c:'DDI_000053',n:'Фондан шоколадный 24 шт',u:'кор'},{c:'DDI_001195',n:'Чай Таёжный 6 уп×10 шт',u:'кор'},
+  {c:'DDI_001070',n:'Чай зелёный Сенча 4 уп×20 шт',u:'кор'},{c:'DDI_002148',n:'Чай чёрный «Пряное солнце» 4 уп×20 шт',u:'кор'},
+  {c:'DDI_001313',n:'Чай чёрный «Английский классический»',u:'кор'},{c:'DDI_001351',n:'Чеснок сушёный 860 г',u:'шт'},
+  {c:'DDI_001804',n:'Чиабатта 16 шт×0,1 кг',u:'кор'},{c:'DDI_001447',n:'Чизкейк «New-York» 4 шт×16 порций',u:'кор'},
+  {c:'DDI_001956',n:'Чизкейк «Дубайский» 4×1200 г',u:'кор'},{c:'DDI_001640',n:'Чизкейк «Карамельный с арахисом»',u:'кор'},
+  {c:'DDI_001589',n:'Шапочки медицинские одноразовые белые 100 шт',u:'уп'},{c:'DDI_000686',n:'Этикетка 30×20 для маркировки 1800 шт',u:'кор'},
+  {c:'DDI_001331',n:'Коробка для римской пиццы 100 шт',u:'кор'},{c:'DDI_002009',n:'Перчатки нитриловые M AVIORA 100 шт',u:'бл'},
+  {c:'DDI_002010',n:'Перчатки нитриловые L AVIORA 100 шт',u:'бл'},{c:'DDI_002011',n:'Перчатки нитриловые XL AVIORA 100 шт',u:'бл'},
+  {c:'DDI_001478',n:'Касалетка для пасты 600 шт',u:'кор'},{c:'DDI_002230',n:'Упаковочная плёнка для запаечной машины',u:'кор'},
+  {c:'DDI_001876',n:'Коробка для пиццы 20 см 100 шт',u:'бл'},{c:'DDI_001539',n:'Коробка для закусок малая 100 шт',u:'бл'},
+  {c:'DDI_001538',n:'Коробка для закусок 100 шт',u:'бл'},{c:'DDI_001226',n:'Бумага для выпечки 2000 шт',u:'кор'},
+  {c:'DDI_000661',n:'Пергамент фирменный 2000 шт',u:'кор'},
+];
+
+let db=null,PRODUCTS=[],state={screen:'loading',tab:'list',role:null,userName:'',sessionId:null,sessionData:null,sessions:[],accepted:{},searchQ:'',viewSessionId:null};
+let currentCode=null,panelUnit=null,unsub=null,unsubSessions=null;
+
+function loadProducts(){try{const s=localStorage.getItem(LS_PRODUCTS);if(s){const p=JSON.parse(s);if(p&&p.length)return p;}}catch(e){}return JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));}
+function norm(s){return(s||'').toLowerCase().replace(/ё/g,'е').replace(/й/g,'и')}
+function fmtDate(ts){if(!ts)return'';const d=ts.toDate?ts.toDate():new Date(ts);return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+function esc(s){return(s||'').replace(/'/g,"\\'")}
+
+function render(){
+  const root=document.getElementById('root');
+  if(state.screen==='loading'){root.innerHTML=`<div class="spinner"><div class="spin"></div>Загружаем…</div>`;return;}
+  if(state.screen==='setup'){renderSetup(root);return;}
+  if(state.screen==='login'){renderLogin(root);return;}
+  if(state.screen==='session-new'){renderNewSession(root);return;}
+  if(state.screen==='receive'){renderReceive(root);return;}
+  if(state.screen==='manager'){renderManager(root);return;}
+  if(state.screen==='view-session'){renderViewSession(root);return;}
+}
+
+/* ===== SETUP ===== */
+function renderSetup(root){
+  root.innerHTML=`
+  <div style="background:var(--orange);padding:32px 20px 28px;text-align:center">
+    <div style="display:inline-flex;width:64px;height:64px;background:rgba(255,255,255,.2);border-radius:18px;align-items:center;justify-content:center;margin-bottom:14px">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
+    <div style="font-size:22px;font-weight:800;color:#fff;margin-bottom:6px">Подключение Firebase</div>
+    <div style="font-size:14px;color:rgba(255,255,255,.8);line-height:1.5">Настройте базу данных один раз —<br>все устройства синхронизируются автоматически</div>
+  </div>
+  <div style="padding:20px 16px 40px;background:var(--bg);flex:1">
+    <div class="card">
+      <div class="label" style="margin-bottom:10px">Вставьте Firebase конфиг (JSON)</div>
+      <textarea id="cfg-input" class="inp" rows="7" placeholder='{\n  "apiKey": "...",\n  "authDomain": "...",\n  "projectId": "..."\n}' style="font-family:monospace;font-size:12px;resize:none;line-height:1.5"></textarea>
+      <button class="btn btn-primary" onclick="saveConfig()" style="margin-top:12px">Подключить →</button>
+    </div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:800;color:var(--orange);margin-bottom:14px">Как получить конфиг</div>
+      <div class="setup-step"><div class="step-num">1</div><div class="step-text">Откройте <b>console.firebase.google.com</b> и создайте проект</div></div>
+      <div class="setup-step"><div class="step-num">2</div><div class="step-text">Build → <b>Firestore Database</b> → Create database → Test mode</div></div>
+      <div class="setup-step"><div class="step-num">3</div><div class="step-text">Шестерёнка ⚙ → Project settings → Your apps → <b>&lt;/&gt; Web</b></div></div>
+      <div class="setup-step"><div class="step-num">4</div><div class="step-text">Скопируйте объект <b>firebaseConfig</b>, вставьте выше</div></div>
+      <div class="setup-step" style="margin-bottom:0"><div class="step-num">5</div><div class="step-text">В Firestore → Rules вставьте:<div class="code-block">allow read, write: if true;</div></div></div>
+    </div>
+  </div>`;
+}
+function saveConfig(){
+  let raw=document.getElementById('cfg-input').value.trim();
+  try{const cfg=JSON.parse(raw);if(!cfg.apiKey||!cfg.projectId)throw new Error();localStorage.setItem(LS_CFG,JSON.stringify(cfg));initFirebase(cfg);}
+  catch(e){toast('Неверный JSON — проверьте формат');}
+}
+
+/* ===== LOGIN ===== */
+function renderLogin(root){
+  root.innerHTML=`
+  <div style="background:var(--orange);padding:32px 20px 28px;text-align:center">
+    <div style="font-size:32px;font-weight:800;color:#fff;letter-spacing:-1px">ДОДО</div>
+    <div style="font-size:14px;color:rgba(255,255,255,.8);margin-top:4px;font-weight:600">Система приёмки поставок</div>
+  </div>
+  <div style="padding:20px 16px 40px;background:var(--bg);flex:1">
+    <div class="card">
+      <div class="label">Ваше имя</div>
+      <input class="inp" id="name-inp" placeholder="Например: Иван" value="${state.userName||''}" style="margin-bottom:0">
+    </div>
+    <div class="card">
+      <div class="label" style="margin-bottom:10px">Роль</div>
+      <div class="role-grid">
+        <div class="role-btn${state.role==='receiver'?' sel':''}" onclick="setRole('receiver')">
+          <div class="role-icon">📦</div>
+          <div class="role-label">Приёмщик</div>
+          <div class="role-desc">Принимаю товар</div>
+        </div>
+        <div class="role-btn${state.role==='manager'?' sel':''}" onclick="setRole('manager')">
+          <div class="role-icon">📋</div>
+          <div class="role-label">Менеджер</div>
+          <div class="role-desc">Проверяю сверку</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">Войти →</button>
+    <button class="btn btn-secondary" onclick="resetConfig()" style="margin-top:10px;font-size:13px;color:var(--text2)">⚙ Сменить Firebase конфиг</button>
+  </div>`;
+  setTimeout(()=>{const i=document.getElementById('name-inp');if(i)i.focus();},100);
+}
+function setRole(r){state.role=r;renderLogin(document.getElementById('root'));}
+function doLogin(){
+  const name=document.getElementById('name-inp').value.trim();
+  if(!name){toast('Введите имя');return;}
+  if(!state.role){toast('Выберите роль');return;}
+  state.userName=name;localStorage.setItem(LS_ROLE,state.role);localStorage.setItem(LS_NAME,name);
+  if(state.role==='receiver'){state.screen='session-new';render();}
+  else{state.screen='manager';render();subscribeManager();}
+}
+function resetConfig(){localStorage.removeItem(LS_CFG);localStorage.removeItem(LS_SESSION);location.reload();}
+function doLogout(){
+  if(unsub)unsub();if(unsubSessions)unsubSessions();
+  localStorage.removeItem(LS_ROLE);localStorage.removeItem(LS_NAME);localStorage.removeItem(LS_SESSION);
+  state={...state,role:null,userName:'',sessions:[],accepted:{},sessionId:null,sessionData:null,screen:'login'};
+  render();
+}
+
+/* ===== NEW SESSION ===== */
+function renderNewSession(root){
+  const hasPrev=!!localStorage.getItem(LS_SESSION);
+  root.innerHTML=`
+  <div class="header">
+    <div class="header-logo">
+      <div class="logo-badge">ДОДО</div>
+      <span class="header-title">Новая приёмка</span>
+    </div>
+    <div style="display:flex;gap:6px"><button class="hbtn-ghost" onclick="doLogout()">Выйти</button><button class="hbtn-ghost" onclick="state.screen='setup';render()" title="Сменить конфиг" style="padding:5px 9px">⚙</button></div>
+  </div>
+  <div style="padding:20px 16px 40px;background:var(--bg);flex:1">
+    <div style="padding:16px 0 8px;text-align:center">
+      <div style="font-size:42px;margin-bottom:10px">🚚</div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:6px">Привет, ${state.userName}!</div>
+      <div style="font-size:14px;color:var(--text2);margin-bottom:24px">Укажите пиццерию для новой приёмки</div>
+    </div>
+    <div class="card">
+      <div class="label">Пиццерия / адрес</div>
+      <input class="inp" id="piz-inp" placeholder="Например: Сыктывкар-10" autocomplete="off">
+    </div>
+    <button class="btn btn-primary" onclick="createSession()" style="margin-bottom:10px">Начать приёмку</button>
+    ${hasPrev?`<button class="btn btn-outline" onclick="continueSession()">Продолжить прошлую приёмку</button>`:''}
+  </div>`;
+  setTimeout(()=>{const i=document.getElementById('piz-inp');if(i)i.focus();},100);
+}
+async function createSession(){
+  const piz=document.getElementById('piz-inp').value.trim();
+  if(!piz){toast('Введите название пиццерии');return;}
+  const id=genId();
+  await db.collection('sessions').doc(id).set({pizzeria:piz,receiver:state.userName,createdAt:firebase.firestore.FieldValue.serverTimestamp(),status:'active',items:[]});
+  localStorage.setItem(LS_SESSION,id);
+  state.sessionId=id;state.accepted={};state.screen='receive';render();subscribeSession(id);
+}
+async function continueSession(){
+  const sid=localStorage.getItem(LS_SESSION);if(!sid)return;
+  state.sessionId=sid;state.screen='receive';render();subscribeSession(sid);
+}
+
+/* ===== RECEIVE ===== */
+function renderReceive(root){
+  const cnt=Object.keys(state.accepted).length;
+  const piz=state.sessionData?state.sessionData.pizzeria:'…';
+  root.innerHTML=`
+  <div style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
+    <div class="header">
+      <div class="header-logo">
+        <div class="logo-badge">ДОДО</div>
+        <div>
+          <div class="header-title">${piz}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.7);font-weight:600">${state.userName}</div>
+        </div>
+      </div>
+      <div class="header-right">
+        ${cnt?`<div class="accepted-badge" onclick="setTab('summary')">${cnt} ✓</div>`:''}
+        <button class="hbtn" onclick="finishSession()">Завершить</button>
+        <button class="hbtn-ghost" onclick="doLogout()" style="padding:5px 8px">✕</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab${state.tab==='list'?' active':''}" onclick="setTab('list')">Позиции</div>
+      <div class="tab${state.tab==='summary'?' active':''}" onclick="setTab('summary')">Принято ${cnt?`(${cnt})`:''}</div>
+      <div class="tab${state.tab==='catalog'?' active':''}" onclick="setTab('catalog')">Справочник</div>
+    </div>
+    <div id="main-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
+      ${state.tab==='list'?renderListHTML():state.tab==='summary'?renderSummaryHTML():renderCatalogHTML()}
+    </div>
+    ${state.tab==='summary'&&cnt?`<div class="bottom-bar"><button class="btn btn-primary" onclick="copyResult()">📋 Скопировать список</button></div>`:''}
+  </div>`;
+}
+
+function renderListHTML(){
+  const q=norm(state.searchQ);
+  const filtered=q?PRODUCTS.filter(p=>norm(p.n).includes(q)||norm(p.c).includes(q)):PRODUCTS;
+  if(!filtered.length)return'<div class="empty">Ничего не найдено</div>';
+  const initials=p=>{const w=p.n.split(' ');return(w[0][0]+(w[1]?w[1][0]:'')).toUpperCase()};
+  let html=`<div class="search-bar"><input placeholder="Поиск по названию или коду…" value="${state.searchQ.replace(/"/g,'&quot;')}" oninput="onSearch(this.value)" autocomplete="off" autocorrect="off"></div>`;
+  let lastL='';
+  filtered.forEach(p=>{
+    if(!q){const l=p.n[0].toUpperCase();if(l!==lastL){html+=`<div class="section-lbl">${l}</div>`;lastL=l;}}
+    const a=state.accepted[p.c];
+    html+=`<div class="item${a?' done':''}" onclick="openPanel('${esc(p.c)}')">
+      <div class="item-icon">${a?'✓':initials(p)}</div>
+      <div class="item-info"><div class="item-code">${p.c}</div><div class="item-name">${p.n}</div></div>
+      ${a?`<div class="item-qty">${a.qty} ${a.u}</div>`:`<div class="chevron">›</div>`}
+    </div>`;
+  });
+  return html;
+}
+
+function renderSummaryHTML(){
+  const keys=Object.keys(state.accepted);
+  if(!keys.length)return`<div style="text-align:center;padding:60px 24px"><div style="font-size:48px;margin-bottom:14px">📋</div><div style="font-size:16px;font-weight:700;margin-bottom:6px">Список пуст</div><div style="font-size:14px;color:var(--text2)">Отметьте принятые товары<br>во вкладке «Все позиции»</div></div>`;
+  let html=`<div style="padding:14px 16px 6px;background:var(--bg)"><div style="font-size:13px;font-weight:700;color:var(--text2)">${fmtDate(state.sessionData?state.sessionData.createdAt:null)}</div></div>`;
+  keys.forEach((code,i)=>{
+    const p=PRODUCTS.find(x=>x.c===code)||{n:code};
+    const a=state.accepted[code];
+    html+=`<div class="sum-item"><div class="sum-n">${i+1}.</div><div class="sum-info"><div class="sum-code">${code}</div><div class="sum-name">${p.n}</div></div><div class="sum-qty">${a.qty} ${a.u}</div></div>`;
+  });
+  return html;
+}
+
+
+/* ===== CATALOG ===== */
+let catSearchQ='', editCode=null, epUnit='кор';
+
+function renderCatalogHTML(){
+  const q=norm(catSearchQ);
+  const filtered=q?PRODUCTS.filter(p=>norm(p.n).includes(q)||norm(p.c).includes(q)):PRODUCTS;
+  const initials=p=>{const w=p.n.split(' ');return(w[0][0]+(w[1]?w[1][0]:'')).toUpperCase()};
+  let html=`<div class="search-bar"><input placeholder="Поиск в справочнике…" value="${catSearchQ.replace(/"/g,'&quot;')}" oninput="onCatSearch(this.value)" autocomplete="off" autocorrect="off"></div>`;
+  html+=`<div class="cat-count-bar">${filtered.length} позиций в справочнике</div>`;
+  filtered.forEach(p=>{
+    html+=`<div class="cat-item">
+      <div class="cat-avatar">${initials(p)}</div>
+      <div class="cat-info">
+        <div class="cat-code">${p.c}</div>
+        <div class="cat-name">${p.n}</div>
+        <span class="cat-unit">${p.u}</span>
+      </div>
+      <div class="cat-edit-btn" onclick="openEditPanel('${esc(p.c)}')">✎</div>
+    </div>`;
+  });
+  if(!filtered.length) html+='<div class="empty">Ничего не найдено</div>';
+  html+=`<div class="cat-add-fab"><button onclick="openEditPanel(null)">＋ Новая позиция</button></div>`;
+  return html;
+}
+
+function onCatSearch(v){catSearchQ=v;document.getElementById('main-content').innerHTML=renderCatalogHTML();}
+
+function openEditPanel(code){
+  editCode=code;
+  const p=code?PRODUCTS.find(x=>x.c===code):null;
+  document.getElementById('ep-title').textContent=code?'Редактировать позицию':'Новая позиция';
+  const codeInp=document.getElementById('ep-code');
+  codeInp.value=p?p.c:'';
+  codeInp.readOnly=!!code;
+  codeInp.style.opacity=code?'0.5':'1';
+  document.getElementById('ep-name').value=p?p.n:'';
+  epUnit=p?p.u:'кор';
+  renderEpUnits();
+  document.getElementById('ep-del').style.display=code?'block':'none';
+  document.getElementById('edit-panel').style.display='block';
+  document.getElementById('overlay').style.display='block';
+  setTimeout(()=>{
+    const i=document.getElementById(code?'ep-name':'ep-code');
+    if(i)i.focus();
+  },150);
+}
+
+function closeEditPanel(){
+  document.getElementById('edit-panel').style.display='none';
+  document.getElementById('overlay').style.display='none';
+  editCode=null;
+}
+
+function renderEpUnits(){
+  document.getElementById('ep-units').innerHTML=UNITS.map(u=>`<div class="unit-btn${u===epUnit?' sel':''}" onclick="selEpUnit('${u}')">${u}</div>`).join('');
+}
+function selEpUnit(u){epUnit=u;renderEpUnits();}
+
+async function saveCatItem(){
+  const code=document.getElementById('ep-code').value.trim().toUpperCase();
+  const name=document.getElementById('ep-name').value.trim();
+  if(!code){toast('Введите код товара');document.getElementById('ep-code').focus();return;}
+  if(!name){toast('Введите название');document.getElementById('ep-name').focus();return;}
+  if(!editCode&&PRODUCTS.find(x=>x.c===code)){
+    toast('Такой код уже есть в справочнике');
+    document.getElementById('ep-code').style.borderColor='var(--red)';
+    return;
+  }
+  if(editCode){
+    const idx=PRODUCTS.findIndex(x=>x.c===editCode);
+    if(idx!==-1) PRODUCTS[idx]={c:code,n:name,u:epUnit};
+  }else{
+    PRODUCTS.push({c:code,n:name,u:epUnit});
+    PRODUCTS.sort((a,b)=>a.n.localeCompare(b.n,'ru'));
+  }
+  saveProductsLocal();
+  await saveProductsRemote();
+  closeEditPanel();
+  document.getElementById('main-content').innerHTML=renderCatalogHTML();
+  toast(editCode?'Сохранено ✓':'Добавлено ✓');
+}
+
+async function deleteCatItem(){
+  if(!editCode)return;
+  if(!confirm('Удалить позицию из справочника?'))return;
+  PRODUCTS=PRODUCTS.filter(x=>x.c!==editCode);
+  delete state.accepted[editCode];
+  saveProductsLocal();
+  await saveProductsRemote();
+  closeEditPanel();
+  document.getElementById('main-content').innerHTML=renderCatalogHTML();
+  toast('Удалено');
+}
+
+function saveProductsLocal(){
+  try{localStorage.setItem(LS_PRODUCTS,JSON.stringify(PRODUCTS));}catch(e){}
+}
+
+async function saveProductsRemote(){
+  if(!db)return;
+  try{
+    await db.collection('config').doc('products').set({list:PRODUCTS,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  }catch(e){toast('Ошибка сохранения в Firebase');}
+}
+
+function subscribeProducts(){
+  db.collection('config').doc('products').onSnapshot(snap=>{
+    if(snap.exists){
+      const data=snap.data();
+      if(data.list&&data.list.length){
+        PRODUCTS=data.list;
+        saveProductsLocal();
+        if(state.screen==='receive'&&state.tab==='catalog')
+          document.getElementById('main-content').innerHTML=renderCatalogHTML();
+      }
+    }
+  });
+}
+
+function setTab(t){state.tab=t;render();}
+function onSearch(v){state.searchQ=v;document.getElementById('main-content').innerHTML=renderListHTML();}
+
+/* ===== PANEL ===== */
+function openPanel(code){
+  currentCode=code;
+  const p=PRODUCTS.find(x=>x.c===code)||{n:code,u:'кор'};
+  const a=state.accepted[code];
+  document.getElementById('p-name').textContent=p.n;
+  document.getElementById('p-code').textContent=code;
+  document.getElementById('p-qty').value=a?a.qty:'';
+  panelUnit=a?a.u:p.u;
+  renderUnits();
+  document.getElementById('p-del').style.display=a?'':'none';
+  document.getElementById('panel').style.display='block';
+  document.getElementById('overlay').style.display='block';
+  setTimeout(()=>document.getElementById('p-qty').focus(),150);
+}
+function renderUnits(){document.getElementById('p-units').innerHTML=UNITS.map(u=>`<div class="unit-btn${u===panelUnit?' sel':''}" onclick="selUnit('${u}')">${u}</div>`).join('');}
+function selUnit(u){panelUnit=u;renderUnits();}
+function closePanel(){
+  document.getElementById('panel').style.display='none';
+  // only hide overlay if edit panel also closed
+  if(document.getElementById('edit-panel').style.display==='none')
+    document.getElementById('overlay').style.display='none';
+  currentCode=null;
+}
+async function saveItem(){
+  const v=parseFloat(document.getElementById('p-qty').value);
+  if(!v||v<=0){document.getElementById('p-qty').focus();return;}
+  state.accepted[currentCode]={qty:v,u:panelUnit||'кор'};
+  closePanel();await syncSession();render();
+}
+async function delItem(){delete state.accepted[currentCode];closePanel();await syncSession();render();}
+async function syncSession(){
+  if(!state.sessionId||!db)return;
+  const items=Object.entries(state.accepted).map(([code,a])=>{const p=PRODUCTS.find(x=>x.c===code)||{n:code};return{code,name:p.n,qty:a.qty,unit:a.u};});
+  try{await db.collection('sessions').doc(state.sessionId).update({items,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}
+  catch(e){toast('Ошибка синхронизации');}
+}
+async function finishSession(){
+  if(!confirm('Завершить приёмку? Менеджер увидит финальный список.'))return;
+  await db.collection('sessions').doc(state.sessionId).update({status:'done',finishedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  toast('Приёмка завершена ✓');
+  localStorage.removeItem(LS_SESSION);
+  setTimeout(()=>{state.screen='session-new';render();},1400);
+}
+
+/* ===== MANAGER ===== */
+function renderManager(root){
+  const active=state.sessions.filter(s=>s.status==='active');
+  const done=state.sessions.filter(s=>s.status==='done');
+  root.innerHTML=`
+  <div style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
+    <div class="header">
+      <div class="header-logo">
+        <div class="logo-badge">ДОДО</div>
+        <div>
+          <div class="header-title">Менеджер</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.7);font-weight:600">${state.userName}</div>
+        </div>
+      </div>
+      <button class="hbtn-ghost" onclick="doLogout()">Выйти</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
+      <div style="padding:12px 16px 4px;display:flex;align-items:center;gap:6px">
+        <span class="dot-live"></span>
+        <span style="font-size:12px;font-weight:700;color:var(--text2)">Обновляется в реальном времени</span>
+      </div>
+      ${active.length===0&&done.length===0?`
+        <div class="sessions-empty">
+          <div class="sessions-empty-icon">🍕</div>
+          <div style="font-size:16px;font-weight:800;margin-bottom:6px">Нет приёмок</div>
+          <div style="font-size:14px;color:var(--text2)">Когда приёмщики начнут работу,<br>их списки появятся здесь</div>
+        </div>`:''}
+      ${active.length?`<div class="manager-header-bar"><span>Активные · ${active.length}</span></div>`:''}
+      ${active.map(s=>sessionCardHTML(s)).join('')}
+      ${done.length?`<div class="manager-header-bar" style="margin-top:8px"><span>Завершённые · ${done.length}</span></div>`:''}
+      ${done.map(s=>sessionCardHTML(s)).join('')}
+    </div>
+  </div>`;
+}
+function sessionCardHTML(s){
+  const cnt=s.items?s.items.length:0;
+  const isDone=s.status==='done';
+  return`<div class="session-card" onclick="viewSession('${s.id}')">
+    <div class="session-head">
+      <div class="session-top">
+        <div class="session-avatar">${isDone?'✅':'📦'}</div>
+        <div>
+          <div class="session-pizzeria">${s.pizzeria||'—'}</div>
+          <div class="session-meta">${s.receiver||''} · ${fmtDate(s.createdAt)}</div>
+        </div>
+      </div>
+      <div class="session-count${!cnt?' zero':isDone?' done-badge':''}">${cnt} поз.</div>
+    </div>
+    <div class="session-status">
+      ${isDone?`<span class="dot-done"></span><span class="status-text" style="color:var(--green)">Завершено${s.finishedAt?' · '+fmtDate(s.finishedAt):''}</span>`:`<span class="dot-live"></span><span class="status-text">Идёт приёмка</span>`}
+    </div>
+  </div>`;
+}
+function subscribeManager(){
+  if(unsubSessions)unsubSessions();
+  unsubSessions=db.collection('sessions').orderBy('createdAt','desc').limit(30)
+    .onSnapshot(snap=>{state.sessions=snap.docs.map(d=>({id:d.id,...d.data()}));if(state.screen==='manager')render();},e=>toast('Ошибка: '+e.message));
+}
+function viewSession(id){state.viewSessionId=id;state.screen='view-session';render();}
+
+/* ===== VIEW SESSION ===== */
+function renderViewSession(root){
+  const s=state.sessions.find(x=>x.id===state.viewSessionId);
+  if(!s){root.innerHTML='<div class="empty">Сессия не найдена</div>';return;}
+  const items=s.items||[];
+  const isDone=s.status==='done';
+  root.innerHTML=`
+  <div style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
+    <div style="background:var(--orange);padding:12px 16px 16px;flex-shrink:0">
+      <button class="sdh-back" onclick="backToManager()">←</button>
+      <div class="sdh-title">${s.pizzeria||'—'}</div>
+      <div class="sdh-meta">${s.receiver||''} · ${fmtDate(s.createdAt)}</div>
+      <div class="sdh-count">${items.length} позиций ${isDone?'· Завершено':''}</div>
+    </div>
+    ${!isDone?`<div style="padding:10px 16px;background:var(--orange-l);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px"><span class="dot-live"></span><span style="font-size:13px;font-weight:700;color:var(--orange)">Идёт приёмка — список обновляется</span></div>`:''}
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
+      ${items.length===0?`<div class="empty">Пока нет принятых позиций</div>`:items.map((it,i)=>`
+      <div class="sum-item"><div class="sum-n">${i+1}.</div><div class="sum-info"><div class="sum-code">${it.code}</div><div class="sum-name">${it.name}</div></div><div class="sum-qty">${it.qty} ${it.unit}</div></div>`).join('')}
+    </div>
+    ${items.length?`<div class="bottom-bar"><button class="btn btn-primary" onclick="copyManagerResult()">📋 Скопировать список</button></div>`:''}
+  </div>`;
+}
+function backToManager(){
+  state.screen='manager';
+  if(!unsubSessions)subscribeManager();
+  render();
+}
+
+/* ===== COPY ===== */
+function copyResult(){
+  const keys=Object.keys(state.accepted);if(!keys.length)return;
+  const piz=state.sessionData?state.sessionData.pizzeria:'';
+  let txt=`ПРИЁМКА — ${piz}\n${state.userName} · ${new Date().toLocaleString('ru-RU')}\n${'─'.repeat(36)}\n`;
+  keys.forEach((code,i)=>{const p=PRODUCTS.find(x=>x.c===code)||{n:code};const a=state.accepted[code];txt+=`${i+1}. ${code}\n   ${p.n}\n   → ${a.qty} ${a.u}\n`;});
+  txt+=`${'─'.repeat(36)}\nВсего: ${keys.length} позиций`;
+  doCopy(txt);
+}
+function copyManagerResult(){
+  const s=state.sessions.find(x=>x.id===state.viewSessionId);if(!s)return;
+  const items=s.items||[];
+  let txt=`ПРИЁМКА: ${s.pizzeria||'—'}\n${s.receiver||''} · ${fmtDate(s.createdAt)}\n${'─'.repeat(36)}\n`;
+  items.forEach((it,i)=>txt+=`${i+1}. ${it.code}\n   ${it.name}\n   → ${it.qty} ${it.unit}\n`);
+  txt+=`${'─'.repeat(36)}\nВсего: ${items.length} позиций`;
+  doCopy(txt);
+}
+function doCopy(txt){
+  if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>toast('Скопировано!')).catch(()=>fallbackCopy(txt));
+  else fallbackCopy(txt);
+}
+function fallbackCopy(txt){const ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Скопировано!');}catch(e){}document.body.removeChild(ta);}
+
+/* ===== SUBSCRIBE ===== */
+function subscribeSession(id){
+  if(unsub)unsub();
+  unsub=db.collection('sessions').doc(id).onSnapshot(snap=>{
+    if(!snap.exists){toast('Сессия не найдена');return;}
+    const data=snap.data();state.sessionData=data;state.accepted={};
+    (data.items||[]).forEach(it=>{state.accepted[it.code]={qty:it.qty,u:it.unit};});
+    if(state.screen==='receive')render();
+  });
+}
+
+/* ===== FIREBASE INIT ===== */
+function initFirebase(cfg){
+  try{
+    if(!firebase.apps.length)firebase.initializeApp(cfg);
+    db=firebase.firestore();PRODUCTS=loadProducts();subscribeProducts();
+    const savedRole=localStorage.getItem(LS_ROLE),savedName=localStorage.getItem(LS_NAME);
+    if(savedRole&&savedName){
+      state.role=savedRole;state.userName=savedName;
+      if(savedRole==='manager'){state.screen='manager';render();subscribeManager();}
+      else{state.screen='session-new';render();}
+    }else{state.screen='login';render();}
+  }catch(e){toast('Ошибка Firebase: '+e.message);state.screen='setup';render();}
+}
+
+function boot(){
+  state.screen='loading';render();
+  try{const saved=localStorage.getItem(LS_CFG);const cfg=saved?JSON.parse(saved):EMBEDDED_CONFIG;if(cfg&&cfg.apiKey&&cfg.projectId){initFirebase(cfg);}else{state.screen='setup';render();}}
+  catch(e){state.screen='setup';render();}
+}
+
+document.getElementById('p-qty').addEventListener('keydown',e=>{if(e.key==='Enter')saveItem();});
+</script>
+
+<div class="edit-panel" id="edit-panel">
+  <div class="edit-panel-handle"></div>
+  <div class="edit-panel-title" id="ep-title">Новая позиция</div>
+  <div class="label">Код товара</div>
+  <input class="inp" id="ep-code" placeholder="DDI_000000" autocapitalize="characters" autocomplete="off" style="margin-bottom:12px;font-family:monospace">
+  <div class="label">Название</div>
+  <input class="inp" id="ep-name" placeholder="Название товара" autocomplete="off" style="margin-bottom:12px">
+  <div class="label">Единица по умолчанию</div>
+  <div class="unit-grid" id="ep-units" style="margin-bottom:16px"></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn btn-secondary" style="flex:1" onclick="closeEditPanel()">Отмена</button>
+    <button class="btn btn-danger" style="flex:1;display:none" id="ep-del" onclick="deleteCatItem()">Удалить</button>
+    <button class="btn btn-primary" style="flex:2" onclick="saveCatItem()">Сохранить ✓</button>
+  </div>
+</div>
+</body>
+</html>
