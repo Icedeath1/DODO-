@@ -1,0 +1,20 @@
+{
+  "name": "Додо — Приёмка ВЗ/Реф",
+  "short_name": "Приёмка",
+  "description": "Приёмка поставок восток-запад и реф. Для сверки с накладной.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f1923",
+  "theme_color": "#0f1923",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj48cmVjdCB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgcng9IjkwIiBmaWxsPSIjMGYxOTIzIi8+PGNpcmNsZSBjeD0iMjU2IiBjeT0iMjEwIiByPSIxMjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwYzg5NiIgc3Ryb2tlLXdpZHRoPSIzMiIvPjxsaW5lIHgxPSIyNTYiIHkxPSI5MCIgeDI9IjE5MCIgeTI9IjMzMCIgc3Ryb2tlPSIjMDBjODk2IiBzdHJva2Utd2lkdGg9IjMyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48bGluZSB4MT0iMjU2IiB5MT0iOTAiIHgyPSIzMjIiIHkyPSIzMzAiIHN0cm9rZT0iIzAwYzg5NiIgc3Ryb2tlLXdpZHRoPSIzMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PGxpbmUgeDE9IjE1MiIgeTE9IjI5MCIgeDI9IjM2MCIgeTI9IjI5MCIgc3Ryb2tlPSIjMDBjODk2IiBzdHJva2Utd2lkdGg9IjMyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48Y2lyY2xlIGN4PSIzODUiIGN5PSIzODUiIHI9IjgwIiBmaWxsPSIjMDBjODk2Ii8+PHBvbHlsaW5lIHBvaW50cz0iMzU1LDM4NSAzNzgsNDA4IDQxOCwzNjAiIHN0cm9rZT0iIzBmMTkyMyIgc3Ryb2tlLXdpZHRoPSIyMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"]
+}

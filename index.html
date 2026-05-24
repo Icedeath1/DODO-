@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1923">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Приёмка">
+<title>Приёмка — Додо</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0f1923;--surface:#1a2535;--surface2:#243042;
+  --accent:#00c896;--accent-dim:#004d38;
+  --text:#e8f0f8;--text2:#7a9ab8;
+  --danger:#e24b4a;--warn:#ef9f27;--border:#2a3d55;--r:10px;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;overflow-x:hidden}
+#app{display:flex;flex-direction:column;height:100vh;max-width:520px;margin:0 auto}
+.header{background:var(--surface);padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.logo{font-size:11px;letter-spacing:2px;color:var(--text2);text-transform:uppercase}
+.logo span{color:var(--accent);font-weight:700}
+#badge{background:var(--accent);color:#000;font-size:12px;font-weight:700;border-radius:20px;padding:3px 9px;display:none;cursor:pointer}
+.search-wrap{position:relative}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none}
+.search-inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:15px;padding:10px 12px 10px 36px;outline:none;-webkit-appearance:none}
+.search-inp:focus{border-color:var(--accent)}
+.search-inp::placeholder{color:var(--text2)}
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{flex:1;padding:10px;text-align:center;font-size:12px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.view{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none}
+.view.active{display:block}
+.section-letter{font-size:11px;letter-spacing:1.5px;color:var(--text2);padding:10px 16px 4px;text-transform:uppercase;position:sticky;top:0;background:var(--bg);z-index:1}
+.item{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.item:active{background:var(--surface)}
+.item.added{background:var(--accent-dim)}
+.item-info{flex:1;min-width:0}
+.item-code{font-size:10px;color:var(--text2);margin-bottom:2px;font-family:monospace}
+.item-name{font-size:14px;line-height:1.35;word-break:break-word}
+.item-badge{background:var(--accent);color:#000;font-size:11px;font-weight:700;border-radius:6px;padding:3px 8px;margin-left:10px;white-space:nowrap;flex-shrink:0}
+
+/* CATALOG ITEM */
+.cat-item{display:flex;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border)}
+.cat-info{flex:1;min-width:0}
+.cat-code{font-size:10px;color:var(--text2);font-family:monospace;margin-bottom:1px}
+.cat-name{font-size:13px;line-height:1.3;word-break:break-word}
+.cat-unit{font-size:11px;color:var(--accent);margin-top:2px}
+.cat-actions{display:flex;gap:6px;flex-shrink:0;margin-left:10px}
+.icon-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text2);width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.icon-btn.del{color:var(--danger);border-color:var(--danger)}
+.icon-btn svg{pointer-events:none}
+.cat-add-bar{padding:12px 16px;border-bottom:2px solid var(--accent);background:var(--surface);position:sticky;top:0;z-index:2}
+.cat-add-bar button{width:100%;background:var(--accent);color:#000;border:none;border-radius:var(--r);font-size:14px;font-weight:700;padding:11px;cursor:pointer}
+.cat-count{font-size:11px;color:var(--text2);text-align:center;padding:6px;border-bottom:1px solid var(--border)}
+
+/* INPUT PANEL */
+#input-panel,#edit-panel{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;background:var(--surface);border-top:2px solid var(--accent);padding:16px;z-index:100;display:none}
+.panel-title{font-size:13px;color:var(--text2);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.panel-code{font-size:10px;color:var(--accent);font-family:monospace;margin-bottom:12px}
+.input-row{display:flex;gap:10px;margin-bottom:12px}
+.num-inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:22px;font-weight:700;padding:10px 14px;outline:none;text-align:center;-webkit-appearance:none;appearance:none}
+.num-inp:focus{border-color:var(--accent)}
+.text-inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:15px;padding:10px 12px;outline:none;-webkit-appearance:none;margin-bottom:10px}
+.text-inp:focus{border-color:var(--accent)}
+.text-inp::placeholder{color:var(--text2)}
+.label-sm{font-size:11px;color:var(--text2);margin-bottom:5px;display:block}
+.unit-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.unit-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text2);font-size:14px;padding:9px 0;cursor:pointer;text-align:center}
+.unit-btn.sel{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);font-weight:700}
+.panel-actions{display:flex;gap:10px}
+.btn{flex:1;border-radius:var(--r);font-size:15px;font-weight:700;padding:13px;cursor:pointer;border:none}
+.btn-ok{background:var(--accent);color:#000}
+.btn-del{background:var(--surface2);color:var(--danger);border:1px solid var(--danger)}
+.btn-cancel{background:var(--surface2);color:var(--text2);border:1px solid var(--border)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;display:none}
+
+/* SUMMARY */
+.sum-header{padding:16px;border-bottom:1px solid var(--border)}
+.sum-title{font-size:18px;font-weight:700;margin-bottom:4px}
+.sum-sub{font-size:12px;color:var(--text2)}
+.sum-item{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:12px}
+.sum-num{font-size:11px;color:var(--text2);min-width:20px;text-align:right;margin-top:2px}
+.sum-info{flex:1}.sum-code{font-size:10px;color:var(--text2);font-family:monospace;margin-bottom:2px}
+.sum-name{font-size:14px;line-height:1.3}
+.sum-qty{font-size:16px;font-weight:700;color:var(--accent);white-space:nowrap;flex-shrink:0}
+.empty{text-align:center;padding:60px 24px;color:var(--text2);font-size:15px}
+
+#bottom-bar{padding:12px 16px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0;display:none}
+.btn-copy{width:100%;background:var(--accent);color:#000;font-size:16px;font-weight:700;padding:14px;border-radius:var(--r);border:none;cursor:pointer}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;font-size:14px;font-weight:700;padding:10px 20px;border-radius:30px;z-index:200;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+#offline-bar{display:none;background:var(--warn);color:#000;font-size:12px;font-weight:700;text-align:center;padding:6px;letter-spacing:.5px}
+#install-btn{display:none;position:fixed;bottom:80px;right:16px;background:var(--accent);color:#000;border:none;border-radius:30px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;z-index:150;box-shadow:0 4px 16px rgba(0,200,150,.35)}
+#install-btn:active{opacity:.85}
+</style>
+</head>
+<body>
+<div id="offline-bar">⚠ Нет соединения — работаем офлайн</div>
+<button id="install-btn" onclick="installApp()">⬇ Установить приложение</button>
+<div id="app">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo"><span>ДОДО</span> · ПРИЁМКА ВЗ/РЕФ</div>
+      <div id="badge" onclick="switchTab('summary')">0 ✓</div>
+    </div>
+    <div class="search-wrap" id="search-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-inp" id="search" type="search" placeholder="Поиск по названию или коду…" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" id="tab-list" onclick="switchTab('list')">Приёмка</div>
+    <div class="tab" id="tab-summary" onclick="switchTab('summary')">Принято</div>
+    <div class="tab" id="tab-catalog" onclick="switchTab('catalog')">Справочник</div>
+  </div>
+  <div id="list-view" class="view active"></div>
+  <div id="summary-view" class="view"></div>
+  <div id="catalog-view" class="view"></div>
+  <div id="bottom-bar"><button class="btn-copy" onclick="copyToClipboard()">📋 Скопировать для менеджера</button></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeAllPanels()"></div>
+
+<!-- Приёмка: ввод количества -->
+<div id="input-panel">
+  <div class="panel-title" id="panel-name"></div>
+  <div class="panel-code" id="panel-code"></div>
+  <div class="input-row">
+    <input class="num-inp" id="qty-input" type="number" inputmode="decimal" min="0" step="any" placeholder="0">
+  </div>
+  <div class="unit-grid" id="unit-grid"></div>
+  <div class="panel-actions">
+    <button class="btn btn-cancel" onclick="closeAllPanels()">Отмена</button>
+    <button class="btn btn-del" id="btn-del" onclick="deleteAccepted()">Удалить</button>
+    <button class="btn btn-ok" onclick="saveAccepted()">Сохранить</button>
+  </div>
+</div>
+
+<!-- Справочник: редактировать/добавить позицию -->
+<div id="edit-panel">
+  <div style="font-size:14px;font-weight:700;margin-bottom:14px" id="edit-panel-title">Новая позиция</div>
+  <label class="label-sm">Код товара (DDI_...)</label>
+  <input class="text-inp" id="ep-code" placeholder="DDI_000000" autocapitalize="characters" autocomplete="off">
+  <label class="label-sm">Название</label>
+  <input class="text-inp" id="ep-name" placeholder="Название товара" autocomplete="off">
+  <label class="label-sm">Единица по умолчанию</label>
+  <div class="unit-grid" id="ep-unit-grid"></div>
+  <div class="panel-actions">
+    <button class="btn btn-cancel" onclick="closeAllPanels()">Отмена</button>
+    <button class="btn btn-del" id="ep-btn-del" onclick="deleteCatalogItem()">Удалить</button>
+    <button class="btn btn-ok" onclick="saveCatalogItem()">Сохранить</button>
+  </div>
+</div>
+
+<div id="toast">Скопировано!</div>
+
+<script>
+const DEFAULT_PRODUCTS = [
+  {c:'DDI_001752',n:'Пита пшеничная',u:'кор'},
+  {c:'DDI_001602',n:'Говядина пряная «Пряная говядина» 3 кг',u:'кор'},
+  {c:'DDI_001699',n:'Коробка для пиццы 25 см',u:'бл'},
+  {c:'DDI_001698',n:'Коробка для пиццы 30 см',u:'бл'},
+  {c:'DDI_001697',n:'Коробка для пиццы 35 см',u:'бл'},
+  {c:'DDI_000629',n:'Ананасы кусочки 580 мл (24 банки)',u:'кор'},
+  {c:'DDI_000630',n:'Ананасы кусочки 3100 мл (6 банок)',u:'кор'},
+  {c:'DDI_001272',n:'Анкета «В Додо есть то, что важно»',u:'уп'},
+  {c:'DDI_001944',n:'Бахилы одноразовые 100 шт',u:'уп'},
+  {c:'DDI_001723',n:'Бейдж 20 шт',u:'уп'},
+  {c:'DDI_001968',n:'Бекон классический вар-коп замороженный 3 кг',u:'кор'},
+  {c:'DDI_002286',n:'Бекон копчено-вареный ТЗ Додо 10шт*500г',u:'кор'},
+  {c:'DDI_001435',n:'Бекон 10 шт*0,5 кг',u:'кор'},
+  {c:'DDI_001240',n:'Мини-эклеры 3 шт х 17 уп',u:'кор'},
+  {c:'DDI_001812',n:'Брелок акриловый (фигурки)',u:'кор'},
+  {c:'DDI_002075',n:'Брусника замороженная 1 кг*10 пак.',u:'кор'},
+  {c:'DDI_000983',n:'Конверт для пиццы кусочками 1000 шт',u:'кор'},
+  {c:'DDI_000853',n:'Бумага офисная А4 500 л',u:'шт'},
+  {c:'DDI_000946',n:'Креветки белоногие очищенные 4,5 кг',u:'кор'},
+  {c:'DDI_001686',n:'Варенье малиновое порционное 120 шт',u:'кор'},
+  {c:'DDI_002001',n:'Стаканы вафельные для мороженого 390 шт',u:'кор'},
+  {c:'DDI_002256',n:'Ветчина ТЗ Додо 10шт*0,5 кг (тест)',u:'кор'},
+  {c:'DDI_000269',n:'Ветчина 10 шт*0,5 кг',u:'кор'},
+  {c:'DDI_000772',n:'Вилка в инд. упак. 500 шт',u:'кор'},
+  {c:'DDI_001043',n:'Размешиватель для кофе 5000 шт',u:'кор'},
+  {c:'DDI_000910',n:'Держатель для двух стаканов 150 шт',u:'кор'},
+  {c:'DDI_001604',n:'Мороженое Сорбет Клубничный Гранат 16 шт',u:'кор'},
+  {c:'DDI_001611',n:'Мороженое Сорбет Лимонный Фреш 16 шт',u:'кор'},
+  {c:'DDI_000297',n:'Детская атрибутика — гирлянда бумажная',u:'кор'},
+  {c:'DDI_000301',n:'Детская атрибутика — маска «Додо Клюв»',u:'кор'},
+  {c:'DDI_000298',n:'Детская атрибутика — раскраска',u:'кор'},
+  {c:'DDI_000296',n:'Детская атрибутика — колпачки',u:'кор'},
+  {c:'DDI_000299',n:'Детская атрибутика — тарелки одноразовые',u:'кор'},
+  {c:'DDI_000481',n:'Контейнер для салата 750 мл 360 шт',u:'кор'},
+  {c:'DDI_000134',n:'Дрожжи SAF-Instant 500 г',u:'уп'},
+  {c:'DDI_000135',n:'Дрожжи SAF-Moment 11 г*60 шт',u:'уп'},
+  {c:'DDI_000041',n:'Масло подсолнечное Sunny Gold 15 бут*1 л',u:'кор'},
+  {c:'DDI_000234',n:'Сахар-песок 10 уп*1 кг',u:'кор'},
+  {c:'DDI_000042',n:'Соль весовая 30 шт*1 кг',u:'кор'},
+  {c:'DDI_000988',n:'Додо Книга 1+2 12 шт',u:'кор'},
+  {c:'DDI_000703',n:'Помпа-дозатор для концентратов 38мм*15мл',u:'шт'},
+  {c:'DDI_000195',n:'Зажим для воздушного шара 100 шт',u:'уп'},
+  {c:'DDI_001164',n:'Маффин «Солёная карамель» 20 шт',u:'кор'},
+  {c:'DDI_001239',n:'Наггетсы куриные 12 кг',u:'кор'},
+  {c:'DDI_002132',n:'Новогодний капхолдер 1400 шт',u:'кор'},
+  {c:'DDI_000833',n:'Картофель фри 5 шт*2,5 кг',u:'кор'},
+  {c:'DDI_001054',n:'Картофельные дольки 5 шт*2,5 кг',u:'кор'},
+  {c:'DDI_002099',n:'Квас «Обломов» 0,5 л ПЭТ*9 шт',u:'кор'},
+  {c:'DDI_002004',n:'Книга «Додо: от подвала до миллиарда»',u:'кор'},
+  {c:'DDI_001484',n:'Колбаски классические 12 шт*0,5 кг',u:'кор'},
+  {c:'DDI_001338',n:'Перец халапеньо 6 банок*3100 мл',u:'кор'},
+  {c:'DDI_000995',n:'Пицца-соус 10 кг',u:'кор'},
+  {c:'DDI_001855',n:'Игрушка для Додо Бокса 48 шт',u:'кор'},
+  {c:'DDI_002219',n:'Концентрат «Груша-Фейхоа» 1 л',u:'шт'},
+  {c:'DDI_002217',n:'Концентрат «Голубика-Лайм-Мята» 1 л',u:'шт'},
+  {c:'DDI_002221',n:'Концентрат «Малина-Драгонфрут» 1 л',u:'шт'},
+  {c:'DDI_002218',n:'Концентрат «Инжир-Бузина» 1 л',u:'шт'},
+  {c:'DDI_001309',n:'Концентрат «Клубничный мохито» 1 л',u:'шт'},
+  {c:'DDI_001872',n:'Концентрат «Лимон-Мята» 1 л',u:'шт'},
+  {c:'DDI_001871',n:'Концентрат «Персик» 1 л',u:'шт'},
+  {c:'DDI_001870',n:'Концентрат «Тархун» 1 л',u:'шт'},
+  {c:'DDI_001907',n:'Концентрат «Фисташка» 1 л',u:'шт'},
+  {c:'DDI_002245',n:'Концентрат «Виноград-Киви» 1 л',u:'шт'},
+  {c:'DDI_002246',n:'Концентрат «Голубая малина» 1 л',u:'шт'},
+  {c:'DDI_001988',n:'Концентрат замор. «Горячий сорбет Манго-чили»',u:'кор'},
+  {c:'DDI_001808',n:'Концентрат замор. «Апельсин и облепиха»',u:'кор'},
+  {c:'DDI_001257',n:'Какао 26 г 90 шт',u:'кор'},
+  {c:'DDI_001996',n:'Основа для пиццы (Римская) 0,24 кг 10 шт',u:'кор'},
+  {c:'DDI_001483',n:'Корица молотая 600 г',u:'шт'},
+  {c:'DDI_001862',n:'Коробка для пиццы 25 см Dodo x Roblox',u:'бл'},
+  {c:'DDI_001969',n:'Хешбрауны картофельные 5 уп*2500 г',u:'кор'},
+  {c:'DDI_001058',n:'Кофе-зерно 20 шт*500 г',u:'кор'},
+  {c:'DDI_001608',n:'Креветки в панировке жареные 6 уп*700 г',u:'кор'},
+  {c:'DDI_000117',n:'Крупка — мука из твёрдой пшеницы 5 кг',u:'шт'},
+  {c:'DDI_000861',n:'Крышка к контейнеру для салата 500 шт',u:'уп'},
+  {c:'DDI_001709',n:'Крышка плоская для коктейля 1000 шт',u:'кор'},
+  {c:'DDI_001704',n:'Крышка для кофе 0,2 л — 1000 шт',u:'кор'},
+  {c:'DDI_001148',n:'Крышка для кофе 0,3 и 0,4 л — 1000 шт',u:'кор'},
+  {c:'DDI_001999',n:'Кубики свиной шейки «Шашлычные» 6 уп*0,5 кг',u:'кор'},
+  {c:'DDI_001011',n:'Филе цыплёнка Халяль 12 кг',u:'кор'},
+  {c:'DDI_001432',n:'Лимонад «Арбузный лайм» 0,5 л*9 шт',u:'кор'},
+  {c:'DDI_000771',n:'Ложка столовая в инд. упак. 500 шт',u:'кор'},
+  {c:'DDI_001743',n:'Паста 18 уп*120 г',u:'кор'},
+  {c:'DDI_002072',n:'Паста 25 уп*120 г (тест)',u:'кор'},
+  {c:'DDI_000728',n:'Маски одноразовые 50 шт',u:'уп'},
+  {c:'DDI_000527',n:'Маффин «Три шоколада» 20 шт',u:'кор'},
+  {c:'DDI_001894',n:'Маффин с черничным джемом 20 шт',u:'кор'},
+  {c:'DDI_001227',n:'Мешки для мусора 60 л (кор*60 рул.)',u:'кор'},
+  {c:'DDI_002195',n:'Крылья «Барбекю» 12 кг (тест)',u:'кор'},
+  {c:'DDI_001034',n:'Молоко 3,2% «Эко Нива» 1 л 12 шт',u:'кор'},
+  {c:'DDI_001259',n:'Сгущёнка в стиках 7 г 100 шт',u:'бл'},
+  {c:'DDI_001979',n:'Пломбир «Додокрошка» 16 шт',u:'кор'},
+  {c:'DDI_000489',n:'Мороженое для молочного коктейля 30 шт*140 г',u:'кор'},
+  {c:'DDI_001425',n:'Морс ягодный «Вишня» 18 шт*0,45 л',u:'кор'},
+  {c:'DDI_001419',n:'Морс ягодный «Клюква» 18 шт*0,45 л',u:'кор'},
+  {c:'DDI_001426',n:'Морс ягодный «Чёрная смородина» 18 шт*0,45 л',u:'кор'},
+  {c:'DDI_001739',n:'Мука ДОДО пшеничная хлебопекарная 10 кг',u:'шт'},
+  {c:'DDI_002196',n:'Мясная начинка с луком 12 кг (тест)',u:'кор'},
+  {c:'DDI_000813',n:'Колбаса «Пепперони» 8 кг',u:'кор'},
+  {c:'DDI_000437',n:'Колбаса «Чоризо» 8*1 кг',u:'кор'},
+  {c:'DDI_002136',n:'Макаронс «Штрудель и солёная карамель» 20 уп',u:'кор'},
+  {c:'DDI_000396',n:'Наклейки для раскраски 300 шт',u:'кор'},
+  {c:'DDI_001811',n:'Напиток соево-банановый Banana 1 л*12 шт',u:'кор'},
+  {c:'DDI_001652',n:'Концентрат замор. «Малина-клюква» 30 шт',u:'кор'},
+  {c:'DDI_002021',n:'Напиток кокосовый Vega Natura 1 л*6 шт',u:'кор'},
+  {c:'DDI_001827',n:'Молоко кокосовое Barista Coconut 1 л*12 шт',u:'кор'},
+  {c:'DDI_001826',n:'Молоко миндальное Barista Almond 1 л*12 шт',u:'кор'},
+  {c:'DDI_002222',n:'Концентрат «Солёная карамель» 1 л',u:'шт'},
+  {c:'DDI_001177',n:'Соус для поливки «Шоколад» 1 л',u:'шт'},
+  {c:'DDI_000770',n:'Нож столовый в инд. упак. 500 шт',u:'кор'},
+  {c:'DDI_000597',n:'Огурцы маринованные 5 шт*1,8 кг',u:'кор'},
+  {c:'DDI_001262',n:'Омлет круглый 72 шт',u:'кор'},
+  {c:'DDI_001027',n:'Мешки для мусора 180 л 8 рул.',u:'кор'},
+  {c:'DDI_000644',n:'Пакет-переноска для коробок 1000 шт',u:'кор'},
+  {c:'DDI_002162',n:'Термопакеты 20 шт',u:'уп'},
+  {c:'DDI_001090',n:'Пакет «майка» 2000 шт',u:'кор'},
+  {c:'DDI_001789',n:'Пакет бумажный «ДОДО» 2000 шт',u:'кор'},
+  {c:'DDI_001298',n:'Пакеты фасовочные 1000 шт',u:'уп'},
+  {c:'DDI_000196',n:'Палочка для воздушного шара 100 шт',u:'уп'},
+  {c:'DDI_002194',n:'Пачка «Закуски большая» 100 шт',u:'бл'},
+  {c:'DDI_002193',n:'Пачка «Закуски малая» 100 шт',u:'бл'},
+  {c:'DDI_002190',n:'Пачка «Пицца 25» 100 шт',u:'бл'},
+  {c:'DDI_002191',n:'Пачка «Пицца 30» 100 шт',u:'бл'},
+  {c:'DDI_002192',n:'Пачка «Пицца 35» 100 шт',u:'бл'},
+  {c:'DDI_001860',n:'Коробка ДОДО Мил (Додо Бокс) 150 шт',u:'уп'},
+  {c:'DDI_001875',n:'Коробка для завтраков 300 шт',u:'кор'},
+  {c:'DDI_000661',n:'Пергамент фирменный 2000 шт',u:'кор'},
+  {c:'DDI_000828',n:'Перец чёрный порционный 1000 шт',u:'кор'},
+  {c:'DDI_001045',n:'Перчатки одноразовые виниловые L 100 шт',u:'уп'},
+  {c:'DDI_001046',n:'Перчатки виниловые голубые M 100 шт',u:'уп'},
+  {c:'DDI_000825',n:'Перчатки латексные хозяйственные L',u:'кор'},
+  {c:'DDI_000811',n:'Перчатки латексные хозяйственные M',u:'кор'},
+  {c:'DDI_002010',n:'Перчатки нитриловые L AVIORA 100 шт',u:'бл'},
+  {c:'DDI_002009',n:'Перчатки нитриловые M AVIORA 100 шт',u:'бл'},
+  {c:'DDI_002008',n:'Перчатки нитриловые S AVIORA 100 шт',u:'бл'},
+  {c:'DDI_002011',n:'Перчатки нитриловые XL AVIORA 100 шт',u:'бл'},
+  {c:'DDI_001114',n:'Перчатки одноразовые виниловые S 100 шт',u:'уп'},
+  {c:'DDI_001113',n:'Перчатки одноразовые виниловые XL 100 шт',u:'уп'},
+  {c:'DDI_002030',n:'Перчатки резиновые с манжетой красные S',u:'уп'},
+  {c:'DDI_002032',n:'Перчатки резиновые 5 звёзд L',u:'уп'},
+  {c:'DDI_002025',n:'Перчатки резиновые 5 звёзд M',u:'уп'},
+  {c:'DDI_002027',n:'Перчатки резиновые 5 звёзд S',u:'уп'},
+  {c:'DDI_002031',n:'Перчатки резиновые 5 звёзд XL',u:'уп'},
+  {c:'DDI_001562',n:'Печенье «Орео» какао-ваниль 228 г*12 уп',u:'кор'},
+  {c:'DDI_001844',n:'Кукис шоколадный с глазурью 28 шт',u:'кор'},
+  {c:'DDI_002022',n:'Пирог «Зелёное Яблоко Крамбл» 18 шт',u:'кор'},
+  {c:'DDI_001528',n:'Пирожное «Тирамису» 12 шт*90 г',u:'уп'},
+  {c:'DDI_001938',n:'Пирожное «Муравьёшки» 16 шт*60 г',u:'кор'},
+  {c:'DDI_002248',n:'Пирожное «Лимончелло» 12 шт',u:'кор'},
+  {c:'DDI_001350',n:'Скатерть на поднос 1000 шт',u:'кор'},
+  {c:'DDI_001609',n:'Полотенца бумажные V-образные 250 л*15 уп',u:'кор'},
+  {c:'DDI_001918',n:'Куриный попкорн «Байтсы» 12 кг',u:'кор'},
+  {c:'DDI_000459',n:'Приправа «Итальянские травы» 400 мл',u:'уп'},
+  {c:'DDI_000760',n:'Салфетки бумажные 100 шт*24 упак',u:'кор'},
+  {c:'DDI_001157',n:'Сахар порционный 1000 шт',u:'кор'},
+  {c:'DDI_000349',n:'Сгущённое молоко для поливки 24 шт*270 г',u:'кор'},
+  {c:'DDI_001605',n:'Сироп «Яблочный пирог» 1 л',u:'шт'},
+  {c:'DDI_001244',n:'Сироп Classic карамель Gourmix 1 л',u:'шт'},
+  {c:'DDI_002244',n:'Сироп для кофе «Тыквенный» 1 л',u:'шт'},
+  {c:'DDI_001243',n:'Сироп для кофе «Орех» 1 л',u:'шт'},
+  {c:'DDI_001922',n:'Сироп для кофе «Чёрный лес» 1 л',u:'шт'},
+  {c:'DDI_001146',n:'Сироп для кофе «Кокос» 1000 мл',u:'шт'},
+  {c:'DDI_001990',n:'Сироп для кофе «Булочка с корицей» 1 л',u:'шт'},
+  {c:'DDI_000920',n:'Смесь для коктейля «Клубника» 1 л',u:'шт'},
+  {c:'DDI_001409',n:'Сыр Моцарелла в слайсах 10 шт*0,4 кг',u:'кор'},
+  {c:'DDI_001947',n:'Сливки питьевые 10% Эконива 1 л*12 шт',u:'кор'},
+  {c:'DDI_001759',n:'Смесь молочная для мороженого 3,5% 11,1 кг',u:'кор'},
+  {c:'DDI_000174',n:'Смесь сыров Чеддар и Пармезан 10 шт*500 г',u:'кор'},
+  {c:'DDI_000829',n:'Соль порционная 1000 шт',u:'кор'},
+  {c:'DDI_000610',n:'Соус порционный «Бальзамик» 10 г*204 шт',u:'кор'},
+  {c:'DDI_001182',n:'Соус порционный «Барбекю Додо» 120 шт*25 г',u:'кор'},
+  {c:'DDI_001873',n:'Соус «Сацебели» 15 шт*0,25 кг',u:'кор'},
+  {c:'DDI_001410',n:'Соус «Терияки» 0,25 кг*15 шт',u:'кор'},
+  {c:'DDI_002056',n:'Соус «Фирменный» 9 шт*0,5 кг',u:'кор'},
+  {c:'DDI_001596',n:'Соус Горчичный Хайнц 6 шт*1 кг',u:'кор'},
+  {c:'DDI_001116',n:'Соус «Сливочный с грибами» 4,5 кг',u:'кор'},
+  {c:'DDI_001967',n:'Соус майонезный «1000 островов» 120 шт*25 г',u:'кор'},
+  {c:'DDI_001542',n:'Соус майон. «Бургер» 4 шт*1 кг',u:'кор'},
+  {c:'DDI_001823',n:'Соус майонезный «Гриль» 15 шт*0,25 кг',u:'кор'},
+  {c:'DDI_001545',n:'Соус «Ранч» 4 кг',u:'кор'},
+  {c:'DDI_001181',n:'Соус порционный «Сырный Додо» 120 шт*25 г',u:'кор'},
+  {c:'DDI_001101',n:'Соус «Сырный» 4,5 кг',u:'кор'},
+  {c:'DDI_001612',n:'Соус майонезный «Цезарь» 100 шт*30 г',u:'кор'},
+  {c:'DDI_001180',n:'Соус порционный «Ранч Додо» 120 шт*25 г',u:'кор'},
+  {c:'DDI_002074',n:'Соус майонезный «Сливочный хрен» 24*0,25',u:'кор'},
+  {c:'DDI_002052',n:'Соус майон. «Том Ям» 15 шт*0,25 кг',u:'кор'},
+  {c:'DDI_000997',n:'Соус «Альфредо» 4 шт*1 кг',u:'кор'},
+  {c:'DDI_001930',n:'Соус «Масала» 15 шт*0,25 кг',u:'кор'},
+  {c:'DDI_001544',n:'Соус «Песто» 4 кг',u:'кор'},
+  {c:'DDI_001656',n:'Соус пломбирный 12 шт*0,5 кг',u:'кор'},
+  {c:'DDI_001885',n:'Соус «Барбекю» 6 шт*1 кг',u:'кор'},
+  {c:'DDI_002124',n:'Стакан для горячих напитков 200 мл 500 шт',u:'кор'},
+  {c:'DDI_001206',n:'Стакан пластиковый для мороженого 500 шт',u:'кор'},
+  {c:'DDI_002273',n:'Стакан Bubble Cup 300 мл глянцевый 600 шт',u:'кор'},
+  {c:'DDI_002125',n:'Стакан для горячих напитков 300 мл 400 шт',u:'кор'},
+  {c:'DDI_001708',n:'Стакан для коктейля 0,3 л 300 шт',u:'кор'},
+  {c:'DDI_002127',n:'Стакан для горячих напитков 400 мл 320 шт',u:'кор'},
+  {c:'DDI_001710',n:'Стакан для коктейля 0,6 л 200 шт',u:'кор'},
+  {c:'DDI_001318',n:'Стакан для горячих напитков 300 мл 600 шт',u:'кор'},
+  {c:'DDI_001319',n:'Стакан для горячих напитков 400 мл 408 шт',u:'кор'},
+  {c:'DDI_001332',n:'Стакан прозрачный 200 мл 4200 шт',u:'кор'},
+  {c:'DDI_002223',n:'Стикер для соуса КРАСНЫЙ «Новинка» 200 шт',u:'рол'},
+  {c:'DDI_001256',n:'Стикер для соуса «Новинка» рул.',u:'рол'},
+  {c:'DDI_000378',n:'Сухарики для салата 8 шт*400 г',u:'кор'},
+  {c:'DDI_002086',n:'Сыр Моцарелла кубик 10 шт*1 кг',u:'кор'},
+  {c:'DDI_000464',n:'Сыр Фета Брынза «Comella» 35% 15 шт*330 г',u:'кор'},
+  {c:'DDI_001775',n:'Сыр «Блю Чиз» 1,2 кг',u:'кор'},
+  {c:'DDI_001638',n:'Сыр «Микс тертых» Чеддер+Пармезан 9 кг',u:'кор'},
+  {c:'DDI_000634',n:'Сыр Чеддер палочки 5 кг',u:'кор'},
+  {c:'DDI_002147',n:'Сырники замороженные 7 кг / 5 уп*1,4 кг',u:'кор'},
+  {c:'DDI_001946',n:'Тарт Лимонный 12 шт',u:'кор'},
+  {c:'DDI_000540',n:'Термоэтикетка 40*110 мм 10 рол.*500 шт',u:'кор'},
+  {c:'DDI_001961',n:'Мини слоёное тесто 96 шт',u:'кор'},
+  {c:'DDI_001420',n:'Митбол 10 шт*0,5 кг',u:'кор'},
+  {c:'DDI_001942',n:'Торт «Рикотта с грушей» 12 шт',u:'кор'},
+  {c:'DDI_000568',n:'Тортильи замороженные 10 уп*12 шт',u:'кор'},
+  {c:'DDI_002096',n:'Мини-тортилья 192 шт (16 уп*12 шт)',u:'кор'},
+  {c:'DDI_000816',n:'Трубочки 1000 шт',u:'кор'},
+  {c:'DDI_002242',n:'Трубочки коктейльные оранжевые 1500 шт',u:'кор'},
+  {c:'DDI_001815',n:'Трубочка полимерная 5 уп*250 шт',u:'кор'},
+  {c:'DDI_001355',n:'Дозатор для сиропов 28 мм*8 мл',u:'шт'},
+  {c:'DDI_001226',n:'Бумага для выпечки 2000 шт',u:'кор'},
+  {c:'DDI_001160',n:'Пергамент для пиццы на подносе 1000 шт',u:'кор'},
+  {c:'DDI_001887',n:'Лоток для пиццы 1200 шт',u:'кор'},
+  {c:'DDI_001888',n:'Обечайка для лотка 600 шт',u:'кор'},
+  {c:'DDI_002293',n:'Пачки для пиццы 25 см «Академия Пиццы» 100 шт',u:'бл'},
+  {c:'DDI_002294',n:'Пачки для пиццы 25 см «День защиты детей» 100 шт',u:'бл'},
+  {c:'DDI_001539',n:'Коробка для закусок малая 100 шт',u:'бл'},
+  {c:'DDI_001538',n:'Коробка для закусок 100 шт',u:'бл'},
+  {c:'DDI_001876',n:'Коробка для пиццы 20 см 100 шт',u:'бл'},
+  {c:'DDI_002041',n:'Упаковка для додстера 500 шт',u:'кор'},
+  {c:'DDI_002225',n:'Упаковка для додстера Нижний 500 шт',u:'кор'},
+  {c:'DDI_002227',n:'Упаковка для додстера Самара 500 шт',u:'кор'},
+  {c:'DDI_002228',n:'Упаковка для додстера Тольятти 500 шт',u:'кор'},
+  {c:'DDI_002197',n:'Коробка «Академия пиццы» 25 см',u:'бл'},
+  {c:'DDI_001251',n:'Коробка для десертов квадратная 200 шт',u:'уп'},
+  {c:'DDI_001056',n:'Треугольник для кусочка пиццы 250 шт',u:'кор'},
+  {c:'DDI_001041',n:'Коробка для десертов треугольная 200 шт',u:'уп'},
+  {c:'DDI_001478',n:'Касалетка для пасты 600 шт',u:'кор'},
+  {c:'DDI_002247',n:'Упаковочная плёнка для запаечной машины',u:'кор'},
+  {c:'DDI_002230',n:'Упаковочная плёнка для запаечной машины (2)',u:'кор'},
+  {c:'DDI_001479',n:'Фольга алюминиевая 30 см 60 м*12 рул.',u:'кор'},
+  {c:'DDI_000053',n:'Фондан шоколадный 24 шт',u:'кор'},
+  {c:'DDI_002029',n:'Перчатки резиновые красные с манжетой M',u:'уп'},
+  {c:'DDI_002028',n:'Перчатки резиновые красные с манжетой L',u:'уп'},
+  {c:'DDI_002026',n:'Перчатки резиновые красные с манжетой XL',u:'уп'},
+  {c:'DDI_001195',n:'Чай Таёжный 6 уп*10 шт',u:'кор'},
+  {c:'DDI_001531',n:'Чай зелёный «Цитрусовый с имбирём» 4 уп*60 г',u:'кор'},
+  {c:'DDI_001070',n:'Чай зелёный Сенча 4 уп*20 шт',u:'кор'},
+  {c:'DDI_001959',n:'Чай чёрный «Ягодный коктейль» 4 уп*20 шт',u:'кор'},
+  {c:'DDI_001607',n:'Чай чёрный «Душистая липа с мелиссой»',u:'кор'},
+  {c:'DDI_002148',n:'Чай чёрный «Пряное солнце» 4 уп*20 шт',u:'кор'},
+  {c:'DDI_001313',n:'Чай чёрный «Английский классический»',u:'кор'},
+  {c:'DDI_001123',n:'Чековая термо-лента без печати 80 м*15 рул.',u:'кор'},
+  {c:'DDI_001351',n:'Чеснок сушёный 860 г',u:'шт'},
+  {c:'DDI_001804',n:'Чиабатта 16 шт*0,1 кг',u:'кор'},
+  {c:'DDI_001447',n:'Чизкейк «New-York» 4 шт*16 порций',u:'кор'},
+  {c:'DDI_001446',n:'Чизкейк «Банан и печенье» 4*16 порций',u:'кор'},
+  {c:'DDI_001956',n:'Чизкейк «Дубайский» 4*1200 г',u:'кор'},
+  {c:'DDI_001640',n:'Чизкейк «Карамельный с арахисом» 4*12 порций',u:'кор'},
+  {c:'DDI_000874',n:'Шапочка-сеточка из полиэстера 100 шт',u:'бл'},
+  {c:'DDI_001589',n:'Шапочки медицинские одноразовые белые 100 шт',u:'уп'},
+  {c:'DDI_000194',n:'Детская атрибутика — шар воздушный 100 шт',u:'уп'},
+  {c:'DDI_002267',n:'Джус-боллы «Клубника» 1,3 кг*12 шт (тест)',u:'кор'},
+  {c:'DDI_002269',n:'Джус-боллы «Шоколад» 1,3 кг*12 шт (тест)',u:'кор'},
+  {c:'DDI_002104',n:'Сырные шарики 4 кг',u:'кор'},
+  {c:'DDI_002103',n:'Сырные шарики с клубникой 4 кг',u:'кор'},
+  {c:'DDI_000686',n:'Этикетка 30*20 для маркировки 1800 шт',u:'кор'},
+  {c:'DDI_001331',n:'Коробка для римской пиццы 100 шт',u:'кор'},
+];
+
+const UNITS = ['кор','бл','шт','кг','уп','л','рол','пак'];
+const LS_PRODUCTS = 'dodo_products_v2';
+
+function loadProducts(){
+  try{
+    const s=localStorage.getItem(LS_PRODUCTS);
+    if(s){const p=JSON.parse(s);if(Array.isArray(p)&&p.length)return p;}
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+}
+function saveProducts(arr){
+  try{localStorage.setItem(LS_PRODUCTS,JSON.stringify(arr));}catch(e){}
+}
+
+let PRODUCTS = loadProducts();
+let accepted = {};
+let currentAcceptCode = null;
+let acceptUnit = null;
+let currentEditCode = null;
+let epUnit = null;
+let currentTab = 'list';
+let catSearchQ = '';
+
+function norm(s){return (s||'').toLowerCase().replace(/ё/g,'е').replace(/й/g,'и')}
+
+/* ============ LIST / ПРИЁМКА ============ */
+function buildList(filter){
+  const lv = document.getElementById('list-view');
+  const q = norm(filter||'');
+  let html='';
+  let lastL='';
+  const filtered = q
+    ? PRODUCTS.filter(p=>norm(p.n).includes(q)||norm(p.c).includes(q))
+    : PRODUCTS;
+  if(!filtered.length){
+    html='<div class="empty">Ничего не найдено</div>';
+  }
+  filtered.forEach(p=>{
+    if(!q){
+      const l=p.n[0].toUpperCase();
+      if(l!==lastL){html+=`<div class="section-letter">${l}</div>`;lastL=l;}
+    }
+    const a=accepted[p.c];
+    const badge=a?`<div class="item-badge">${a.qty} ${a.u}</div>`:'';
+    html+=`<div class="item${a?' added':''}" onclick="openAcceptPanel('${esc(p.c)}')">
+      <div class="item-info">
+        <div class="item-code">${p.c}</div>
+        <div class="item-name">${p.n}</div>
+      </div>${badge}
+    </div>`;
+  });
+  lv.innerHTML=html;
+}
+
+function openAcceptPanel(code){
+  currentAcceptCode=code;
+  const p=PRODUCTS.find(x=>x.c===code)||{n:code,u:'кор'};
+  document.getElementById('panel-name').textContent=p.n;
+  document.getElementById('panel-code').textContent=code;
+  const a=accepted[code];
+  document.getElementById('qty-input').value=a?a.qty:'';
+  acceptUnit=a?a.u:p.u;
+  renderUnitBtns('unit-grid',UNITS,acceptUnit,u=>{acceptUnit=u;renderUnitBtns('unit-grid',UNITS,acceptUnit,arguments.callee);});
+  document.getElementById('btn-del').style.display=a?'':'none';
+  showPanel('input-panel');
+  setTimeout(()=>document.getElementById('qty-input').focus(),150);
+}
+
+function saveAccepted(){
+  const v=parseFloat(document.getElementById('qty-input').value);
+  if(!v||v<=0){document.getElementById('qty-input').focus();return;}
+  accepted[currentAcceptCode]={qty:v,u:acceptUnit||'кор'};
+  closeAllPanels();
+  updateBadge();
+  buildList(document.getElementById('search').value);
+}
+
+function deleteAccepted(){
+  delete accepted[currentAcceptCode];
+  closeAllPanels();
+  updateBadge();
+  buildList(document.getElementById('search').value);
+}
+
+/* ============ SUMMARY ============ */
+function buildSummary(){
+  const sv=document.getElementById('summary-view');
+  const bb=document.getElementById('bottom-bar');
+  const keys=Object.keys(accepted);
+  if(!keys.length){
+    sv.innerHTML='<div class="empty">Пока ничего не принято.<br>Добавляйте позиции из списка.</div>';
+    bb.style.display='none';return;
+  }
+  bb.style.display='block';
+  let html=`<div class="sum-header"><div class="sum-title">Принято: ${keys.length} поз.</div><div class="sum-sub">${getDateStr()}</div></div>`;
+  keys.forEach((code,i)=>{
+    const p=PRODUCTS.find(x=>x.c===code)||{n:code};
+    const a=accepted[code];
+    html+=`<div class="sum-item">
+      <div class="sum-num">${i+1}.</div>
+      <div class="sum-info"><div class="sum-code">${code}</div><div class="sum-name">${p.n}</div></div>
+      <div class="sum-qty">${a.qty}&nbsp;${a.u}</div>
+    </div>`;
+  });
+  sv.innerHTML=html;
+}
+
+/* ============ CATALOG / СПРАВОЧНИК ============ */
+function buildCatalog(filter){
+  const cv=document.getElementById('catalog-view');
+  const q=norm(filter||'');
+  const filtered=q
+    ?PRODUCTS.filter(p=>norm(p.n).includes(q)||norm(p.c).includes(q))
+    :PRODUCTS;
+  let html=`<div class="cat-add-bar"><button onclick="openEditPanel(null)">+ Добавить новую позицию</button></div>
+  <div class="cat-count">${filtered.length} позиций в справочнике</div>`;
+  filtered.forEach(p=>{
+    html+=`<div class="cat-item">
+      <div class="cat-info">
+        <div class="cat-code">${p.c}</div>
+        <div class="cat-name">${p.n}</div>
+        <div class="cat-unit">${p.u}</div>
+      </div>
+      <div class="cat-actions">
+        <div class="icon-btn" onclick="openEditPanel('${esc(p.c)}')" title="Редактировать">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+      </div>
+    </div>`;
+  });
+  if(!filtered.length)html+='<div class="empty">Ничего не найдено</div>';
+  cv.innerHTML=html;
+}
+
+function openEditPanel(code){
+  currentEditCode=code;
+  const p=code?PRODUCTS.find(x=>x.c===code):null;
+  document.getElementById('edit-panel-title').textContent=code?'Редактировать позицию':'Новая позиция';
+  document.getElementById('ep-code').value=p?p.c:'';
+  document.getElementById('ep-code').readOnly=!!code;
+  document.getElementById('ep-code').style.opacity=code?'0.5':'1';
+  document.getElementById('ep-name').value=p?p.n:'';
+  epUnit=p?p.u:'кор';
+  renderUnitBtns('ep-unit-grid',UNITS,epUnit,u=>{epUnit=u;renderUnitBtns('ep-unit-grid',UNITS,epUnit,arguments.callee);});
+  document.getElementById('ep-btn-del').style.display=code?'':'none';
+  showPanel('edit-panel');
+  if(!code)setTimeout(()=>document.getElementById('ep-code').focus(),150);
+  else setTimeout(()=>document.getElementById('ep-name').focus(),150);
+}
+
+function saveCatalogItem(){
+  const code=document.getElementById('ep-code').value.trim().toUpperCase();
+  const name=document.getElementById('ep-name').value.trim();
+  if(!code||!name){
+    if(!code)document.getElementById('ep-code').focus();
+    else document.getElementById('ep-name').focus();
+    return;
+  }
+  if(currentEditCode){
+    const idx=PRODUCTS.findIndex(x=>x.c===currentEditCode);
+    if(idx!==-1){PRODUCTS[idx]={c:code,n:name,u:epUnit||'кор'};}
+  } else {
+    if(PRODUCTS.find(x=>x.c===code)){
+      document.getElementById('ep-code').style.borderColor='var(--danger)';
+      document.getElementById('ep-code').focus();
+      return;
+    }
+    PRODUCTS.push({c:code,n:name,u:epUnit||'кор'});
+    PRODUCTS.sort((a,b)=>a.n.localeCompare(b.n,'ru'));
+  }
+  saveProducts(PRODUCTS);
+  closeAllPanels();
+  buildCatalog(catSearchQ);
+  buildList(document.getElementById('search').value);
+  showToast(currentEditCode?'Сохранено':'Добавлено');
+}
+
+function deleteCatalogItem(){
+  if(!currentEditCode)return;
+  if(!confirm('Удалить позицию из справочника?'))return;
+  PRODUCTS=PRODUCTS.filter(x=>x.c!==currentEditCode);
+  delete accepted[currentEditCode];
+  saveProducts(PRODUCTS);
+  closeAllPanels();
+  buildCatalog(catSearchQ);
+  buildList(document.getElementById('search').value);
+  updateBadge();
+  showToast('Удалено');
+}
+
+/* ============ SHARED ============ */
+function renderUnitBtns(gridId,units,selected,onSelect){
+  const g=document.getElementById(gridId);
+  g.innerHTML=units.map(u=>`<button class="unit-btn${u===selected?' sel':''}" onclick="(${onSelect.toString()})('${u}')">${u}</button>`).join('');
+}
+
+function showPanel(id){
+  document.getElementById(id).style.display='block';
+  document.getElementById('overlay').style.display='block';
+}
+
+function closeAllPanels(){
+  document.getElementById('input-panel').style.display='none';
+  document.getElementById('edit-panel').style.display='none';
+  document.getElementById('overlay').style.display='none';
+  currentAcceptCode=null;currentEditCode=null;
+}
+
+function switchTab(tab){
+  currentTab=tab;
+  ['list','summary','catalog'].forEach(t=>{
+    document.getElementById('tab-'+t).className='tab'+(t===tab?' active':'');
+    document.getElementById(t+'-view').className='view'+(t===tab?' active':'');
+  });
+  const sw=document.getElementById('search-wrap');
+  sw.style.display=(tab==='list'||tab==='catalog')?'':'none';
+  document.getElementById('search').placeholder=
+    tab==='catalog'?'Поиск в справочнике…':'Поиск по названию или коду…';
+  if(tab==='summary')buildSummary();
+  if(tab==='catalog')buildCatalog(catSearchQ);
+}
+
+function updateBadge(){
+  const n=Object.keys(accepted).length;
+  const b=document.getElementById('badge');
+  b.textContent=n+' ✓';
+  b.style.display=n?'block':'none';
+}
+
+function getDateStr(){
+  const d=new Date();
+  return d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric'})
+    +' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+}
+
+function copyToClipboard(){
+  const keys=Object.keys(accepted);
+  if(!keys.length)return;
+  let txt='ПРИЁМКА ВЗ/РЕФ — '+getDateStr()+'\n'+'─'.repeat(38)+'\n';
+  keys.forEach((code,i)=>{
+    const p=PRODUCTS.find(x=>x.c===code)||{n:code};
+    const a=accepted[code];
+    txt+=`${i+1}. ${code}\n   ${p.n}\n   → ${a.qty} ${a.u}\n`;
+  });
+  txt+='─'.repeat(38)+'\nВсего позиций: '+keys.length;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(()=>showToast('Скопировано!')).catch(()=>fallbackCopy(txt));
+  }else{fallbackCopy(txt);}
+}
+
+function fallbackCopy(txt){
+  const ta=document.createElement('textarea');
+  ta.value=txt;ta.style.cssText='position:fixed;opacity:0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');showToast('Скопировано!');}catch(e){}
+  document.body.removeChild(ta);
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+function esc(s){return (s||'').replace(/'/g,"\\'");}
+
+document.getElementById('search').addEventListener('input',function(){
+  const q=this.value;
+  if(currentTab==='list')buildList(q);
+  else if(currentTab==='catalog'){catSearchQ=q;buildCatalog(q);}
+});
+document.getElementById('qty-input').addEventListener('keydown',function(e){if(e.key==='Enter')saveAccepted();});
+document.getElementById('ep-name').addEventListener('keydown',function(e){if(e.key==='Enter')saveCatalogItem();});
+
+buildList('');
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js')
+      .then(()=>console.log('SW registered'))
+      .catch(e=>console.log('SW error',e));
+  });
+}
+
+window.addEventListener('online', ()=>{
+  document.getElementById('offline-bar').style.display='none';
+});
+window.addEventListener('offline', ()=>{
+  document.getElementById('offline-bar').style.display='block';
+});
+if(!navigator.onLine){
+  document.getElementById('offline-bar').style.display='block';
+}
+
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  document.getElementById('install-btn').style.display='block';
+});
+window.addEventListener('appinstalled',()=>{
+  document.getElementById('install-btn').style.display='none';
+  deferredPrompt=null;
+  showToast('Приложение установлено!');
+});
+function installApp(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(()=>{
+      deferredPrompt=null;
+      document.getElementById('install-btn').style.display='none';
+    });
+  }
+}
+</script>
+</body>
+</html>
