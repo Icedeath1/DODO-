@@ -546,19 +546,33 @@ function renderReceive(r){
       <div class="tab${state.tab==='summary'?' active':''}" onclick="setTab('summary')">Принято${cnt?' ('+cnt+')':''}</div>
       <div class="tab${state.tab==='catalog'?' active':''}" onclick="setTab('catalog')">Справочник</div>
     </div>
+    <div id="search-bar-wrap"></div>
     <div id="main-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
-      ${state.tab==='list'?renderListHTML():state.tab==='summary'?renderSummaryHTML():renderCatalogHTML()}
+      ${state.tab==='list'?renderListItemsHTML():state.tab==='summary'?renderSummaryHTML():renderCatalogItemsHTML()}
     </div>
     ${state.tab==='summary'&&cnt?`<div class="bottom-bar"><button class="btn btn-primary" onclick="copyResult()">📋 Скопировать для менеджера</button></div>`:''}
   </div>`;
+  // Render search bar separately so it never gets destroyed on search
+  requestAnimationFrame(()=>{
+    const sbw = document.getElementById('search-bar-wrap');
+    if(!sbw) return;
+    if(state.tab==='list'){
+      sbw.innerHTML=`<div class="search-bar"><input id="search-inp" placeholder="Поиск по названию или коду…" value="${state.searchQ.replace(/"/g,'&quot;')}" oninput="onSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false"></div>`;
+    } else if(state.tab==='catalog'){
+      sbw.innerHTML=`<div class="search-bar"><input id="search-inp" placeholder="Поиск в справочнике…" value="${state.catQ.replace(/"/g,'&quot;')}" oninput="onCatSearch(this.value)" autocomplete="off" autocorrect="off" spellcheck="false"></div>`;
+    } else {
+      sbw.innerHTML='';
+    }
+  });
 }
 
-function renderListHTML(){
+function renderListHTML(){ return renderListItemsHTML(); }
+function renderListItemsHTML(){
   const q=norm(state.searchQ);
   const filtered=q?PRODUCTS.filter(p=>norm(p.n).includes(q)||norm(p.c).includes(q)):PRODUCTS;
   if(!filtered.length)return'<div class="empty">Ничего не найдено</div>';
   const ini=p=>{const w=p.n.split(' ');return(w[0][0]+(w[1]?w[1][0]:'')).toUpperCase()};
-  let html=`<div class="search-bar"><input placeholder="Поиск по названию или коду…" value="${state.searchQ.replace(/"/g,'&quot;')}" oninput="onSearch(this.value)" autocomplete="off" autocorrect="off"></div>`;
+  let html='';
   let lastL='';
   filtered.forEach(p=>{
     if(!q){const l=p.n[0].toUpperCase();if(l!==lastL){html+=`<div class="section-lbl">${l}</div>`;lastL=l;}}
@@ -584,7 +598,11 @@ function renderSummaryHTML(){
 }
 
 function setTab(t){state.tab=t;render();}
-function onSearch(v){state.searchQ=v;document.getElementById('main-content').innerHTML=renderListHTML();}
+function onSearch(v){
+  state.searchQ=v;
+  const mc=document.getElementById('main-content');
+  if(mc) mc.innerHTML=renderListItemsHTML();
+}
 
 /* ===== PANEL (accept) ===== */
 function openPanel(code){
@@ -622,11 +640,12 @@ async function finishSession(){
 }
 
 /* ===== CATALOG ===== */
-function renderCatalogHTML(){
+function renderCatalogHTML(){ return renderCatalogItemsHTML(); }
+function renderCatalogItemsHTML(){
   const q=norm(state.catQ);
   const filtered=q?PRODUCTS.filter(p=>norm(p.n).includes(q)||norm(p.c).includes(q)):PRODUCTS;
   const ini=p=>{const w=p.n.split(' ');return(w[0][0]+(w[1]?w[1][0]:'')).toUpperCase()};
-  let html=`<div class="search-bar"><input placeholder="Поиск в справочнике…" value="${state.catQ.replace(/"/g,'&quot;')}" oninput="onCatSearch(this.value)" autocomplete="off" autocorrect="off"></div>`;
+  let html='';
   html+=`<div class="cat-count-bar">${filtered.length} позиций</div>`;
   filtered.forEach(p=>{
     html+=`<div class="cat-item">
@@ -639,7 +658,11 @@ function renderCatalogHTML(){
   html+=`<div class="cat-add-fab"><button onclick="openCatPanel(null)">＋ Новая позиция</button></div>`;
   return html;
 }
-function onCatSearch(v){state.catQ=v;document.getElementById('main-content').innerHTML=renderCatalogHTML();}
+function onCatSearch(v){
+  state.catQ=v;
+  const mc=document.getElementById('main-content');
+  if(mc) mc.innerHTML=renderCatalogItemsHTML();
+}
 
 function openCatPanel(code){
   editCatCode=code;
@@ -662,14 +685,14 @@ async function saveCatItem(){
   if(editCatCode){const idx=PRODUCTS.findIndex(x=>x.c===editCatCode);if(idx!==-1)PRODUCTS[idx]={c:code,n:name,u:cpUnit};}
   else{PRODUCTS.push({c:code,n:name,u:cpUnit});PRODUCTS.sort((a,b)=>a.n.localeCompare(b.n,'ru'));}
   saveProductsLocal();await saveProductsRemote();
-  closeAllPanels();document.getElementById('main-content').innerHTML=renderCatalogHTML();
+  closeAllPanels();const mc=document.getElementById('main-content');if(mc)mc.innerHTML=renderCatalogItemsHTML();
   toast(editCatCode?'Сохранено ✓':'Добавлено ✓','var(--green)');
 }
 async function deleteCatItem(){
   if(!editCatCode||!confirm('Удалить позицию из справочника?'))return;
   PRODUCTS=PRODUCTS.filter(x=>x.c!==editCatCode);delete state.accepted[editCatCode];
   saveProductsLocal();await saveProductsRemote();
-  closeAllPanels();document.getElementById('main-content').innerHTML=renderCatalogHTML();toast('Удалено');
+  closeAllPanels();const mc=document.getElementById('main-content');if(mc)mc.innerHTML=renderCatalogItemsHTML();toast('Удалено');
 }
 function saveProductsLocal(){try{localStorage.setItem(LS_PRODUCTS,JSON.stringify(PRODUCTS));}catch(e){}}
 async function saveProductsRemote(){if(!db)return;try{await db.collection('config').doc('products').set({list:PRODUCTS,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});}catch(e){}}
@@ -1034,6 +1057,47 @@ function boot(){
 }
 
 document.getElementById('p-qty').addEventListener('keydown',e=>{if(e.key==='Enter')saveItem();});
+
+// Handle Android hardware back button via JS
+window.addEventListener('popstate', function(e){
+  e.preventDefault();
+  handleBack();
+});
+
+// Push initial state so popstate fires on back press
+history.pushState({page:'main'}, '', location.href);
+
+function handleBack(){
+  // Close open panels first
+  const panel=document.getElementById('panel');
+  const catPanel=document.getElementById('cat-panel');
+  const userPanel=document.getElementById('user-panel');
+  if(panel&&panel.style.display!=='none'){closeAllPanels();history.pushState({page:'main'},'',location.href);return;}
+  if(catPanel&&catPanel.style.display!=='none'){closeAllPanels();history.pushState({page:'main'},'',location.href);return;}
+  if(userPanel&&userPanel.style.display!=='none'){closeAllPanels();history.pushState({page:'main'},'',location.href);return;}
+  // Navigate back in app state
+  if(state.screen==='view-session'){
+    if(currentUser&&currentUser.role==='admin')goAdmin();
+    else goManager();
+    history.pushState({page:'main'},'',location.href);
+    return;
+  }
+  if(state.screen==='profile'){
+    if(currentUser){
+      if(currentUser.role==='admin'){state.screen='admin';render();}
+      else if(currentUser.role==='manager'){state.screen='manager';render();}
+      else{state.screen='session-new';render();}
+    }
+    history.pushState({page:'main'},'',location.href);
+    return;
+  }
+  if(state.screen==='receive'||state.screen==='session-new'||state.screen==='manager'||state.screen==='admin'){
+    // Don't go back further - stay in app
+    history.pushState({page:'main'},'',location.href);
+    return;
+  }
+}
+
 </script>
 </body>
 </html>
