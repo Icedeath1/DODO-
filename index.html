@@ -201,6 +201,12 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',system-ui,-appl
 .cmp-rec.missing{color:var(--red)}
 .cmp-rec.extra{color:var(--blue)}
 .cmp-section-lbl{font-size:11px;font-weight:800;letter-spacing:1px;color:var(--text2);padding:10px 16px 4px;text-transform:uppercase;background:var(--bg);border-bottom:1px solid var(--border)}
+
+/* SESSION SEARCH */
+.session-search-bar{padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5}
+.session-search-bar input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:24px;color:var(--text);font-size:14px;font-family:inherit;padding:9px 16px 9px 38px;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238E8E93' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center}
+.session-search-bar input:focus{border-color:var(--orange);background-color:var(--surface)}
+.session-search-bar input::placeholder{color:var(--text2)}
 ::-webkit-scrollbar{width:0}
 </style>
 </head>
@@ -620,7 +626,7 @@ const DEFAULT_PRODUCTS=[
 ];
 
 let db=null, auth=null, currentUser=null, PRODUCTS=[];
-let state={screen:'loading',tab:'list',adminTab:'sessions',sessionId:null,sessionData:null,sessions:[],accepted:{},searchQ:'',catQ:'',auditQ:'',viewSessionId:null,users:[],auditLog:[],compareTab:false};
+let state={screen:'loading',tab:'list',adminTab:'sessions',sessionId:null,sessionData:null,sessions:[],accepted:{},searchQ:'',catQ:'',auditQ:'',viewSessionId:null,users:[],auditLog:[],compareTab:false,sessionSearchQ:''};
 let currentCode=null,panelUnit=null,unsub=null,unsubSessions=null,unsubUsers=null,unsubAudit=null;
 let editCatCode=null,cpUnit='кор',editUserId=null,upRole='receiver';
 
@@ -841,7 +847,10 @@ function renderReceive(r){
     <div id="main-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
       ${state.tab==='list'?renderListItemsHTML():state.tab==='summary'?renderSummaryHTML():renderCatalogItemsHTML()}
     </div>
-    ${state.tab==='summary'&&cnt?`<div class="bottom-bar"><button class="btn btn-primary" onclick="copyResult()">📋 Скопировать для менеджера</button></div>`:''}
+    ${state.tab==='summary'&&cnt?`<div class="bottom-bar" style="display:flex;gap:8px">
+      <button class="btn btn-primary" style="flex:2" onclick="copyResult()">📋 Скопировать</button>
+      <button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="exportToExcel()">📊 Excel</button>
+    </div>`:''}
   </div>`;
   // Render search bar separately so it never gets destroyed on search
   requestAnimationFrame(()=>{
@@ -1045,7 +1054,23 @@ function subscribeManager(){
     .onSnapshot(snap=>{state.sessions=snap.docs.map(d=>({id:d.id,...d.data()}));if(state.screen==='manager'||state.screen==='admin')render();},e=>toast('Ошибка: '+e.message,'var(--red)'));
 }
 
-function viewSession(id){state.viewSessionId=id;state.screen='view-session';state.compareTab=false;render();}
+
+function onSessionSearch(v){
+  state.sessionSearchQ=v;
+  // Re-render only the list area, keep search bar focused
+  const s=state.sessions.find(x=>x.id===state.viewSessionId);
+  if(!s)return;
+  const items=s.items||[];
+  const q=norm(v||'');
+  const filtered=q?items.filter(it=>norm(it.name).includes(q)||norm(it.code).includes(q)):items;
+  const listEl=document.querySelector('#root > div > div[style*="overflow-y"]');
+  if(!listEl)return;
+  if(!filtered.length){listEl.innerHTML='<div class="empty">'+(items.length?'Ничего не найдено':'Нет принятых позиций')+'</div>';return;}
+  listEl.innerHTML=filtered.map((it,i)=>`
+    <div class="sum-item"><div class="sum-n">${i+1}.</div><div class="sum-info"><div class="sum-code">${it.code}</div><div class="sum-name">${it.name}</div></div><div class="sum-qty">${it.qty} ${it.unit}</div></div>`).join('');
+}
+
+function viewSession(id){state.viewSessionId=id;state.screen='view-session';state.compareTab=false;state.sessionSearchQ='';render();}
 
 /* ===== VIEW SESSION ===== */
 function renderViewSession(r){
@@ -1066,14 +1091,26 @@ function renderViewSession(r){
       <div class="tab${state.compareTab?' active':''}" onclick="state.compareTab=true;render()">Сверка с накладной</div>
     </div>
     ${!isDone&&!state.compareTab?`<div style="padding:10px 16px;background:var(--orange-l);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px"><span class="dot-live"></span><span style="font-size:13px;font-weight:700;color:var(--orange)">Приёмка идёт — список обновляется</span></div>`:''}
+    ${!state.compareTab?`<div id="session-search-bar" style="padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:${isDone?'58px':'100px'};z-index:4">
+      <input style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:24px;color:var(--text);font-size:14px;font-family:inherit;padding:8px 16px 8px 36px;outline:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238E8E93' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:10px center"
+        placeholder="Поиск по коду или названию…" 
+        value="${state.sessionSearchQ||''}" 
+        oninput="onSessionSearch(this.value)"
+        autocomplete="off" autocorrect="off">
+    </div>`:''}
     <div style="flex:1;overflow-y:auto">
       ${state.compareTab
         ? renderCompare(s)
-        : items.length===0?'<div class="empty">Нет принятых позиций</div>':items.map((it,i)=>`
-          <div class="sum-item"><div class="sum-n">${i+1}.</div><div class="sum-info"><div class="sum-code">${it.code}</div><div class="sum-name">${it.name}</div></div><div class="sum-qty">${it.qty} ${it.unit}</div></div>`).join('')
+        : (()=>{
+            const q=norm(state.sessionSearchQ||'')||''
+            const filtered=q?items.filter(it=>norm(it.name).includes(q)||norm(it.code).includes(q)):items
+            if(!filtered.length) return '<div class="empty">'+(items.length?'Ничего не найдено':'Нет принятых позиций')+'</div>'
+            return filtered.map((it,i)=>`
+              <div class="sum-item"><div class="sum-n">${i+1}.</div><div class="sum-info"><div class="sum-code">${it.code}</div><div class="sum-name">${it.name}</div></div><div class="sum-qty">${it.qty} ${it.unit}</div></div>`).join('')
+          })()
       }
     </div>
-    ${!state.compareTab&&items.length?`<div class="bottom-bar"><button class="btn btn-primary" onclick="copySessionResult()">📋 Скопировать список</button></div>`:''}
+    ${!state.compareTab&&items.length?`<div class="bottom-bar" style="display:flex;gap:8px"><button class="btn btn-primary" style="flex:2" onclick="copySessionResult()">📋 Скопировать</button><button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="exportSessionExcel()">📊 Excel</button></div>`:''}
   </div>`;
 }
 function goManager(){state.screen='manager';if(!unsubSessions)subscribeManager();render();}
@@ -1284,6 +1321,72 @@ function closeAllPanels(){
 
 
 
+
+/* ===== EXCEL EXPORT ===== */
+function buildExcelBlob(headers, rows, sheetName){
+  // Simple CSV with BOM for Excel (works without SheetJS for basic needs)
+  // But we have SheetJS loaded, so use it properly
+  if(typeof XLSX === 'undefined'){
+    toast('Библиотека Excel не загружена, попробуйте позже', 'var(--red)');
+    return null;
+  }
+  const wb = XLSX.utils.book_new();
+  const wsData = [headers, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  // Column widths
+  ws['!cols'] = headers.map(()=>({wch:25}));
+  ws['!cols'][0] = {wch:15};
+  ws['!cols'][2] = {wch:10};
+  ws['!cols'][3] = {wch:8};
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  return XLSX.write(wb, {bookType:'xlsx', type:'array'});
+}
+
+function downloadBlob(data, filename){
+  const blob = new Blob([data], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportToExcel(){
+  // Receiver exports their current accepted items
+  const keys = Object.keys(state.accepted);
+  if(!keys.length){toast('Нет принятых позиций', 'var(--red)');return;}
+  const piz = state.sessionData ? state.sessionData.pizzeria : '';
+  const date = new Date().toLocaleDateString('ru-RU');
+  const headers = ['Код товара', 'Наименование', 'Количество', 'Единица'];
+  const rows = keys.map(code => {
+    const p = PRODUCTS.find(x=>x.c===code)||{n:code};
+    const a = state.accepted[code];
+    return [code, p.n, a.qty, a.u];
+  });
+  const data = buildExcelBlob(headers, rows, 'Приёмка');
+  if(!data) return;
+  const fname = `Приёмка_${piz}_${date}.xlsx`.replace(/[\s\/\\:*?"<>|]/g,'_');
+  downloadBlob(data, fname);
+  toast('Excel сохранён ✓', 'var(--green)');
+}
+
+function exportSessionExcel(){
+  // Manager exports a session
+  const s = state.sessions.find(x=>x.id===state.viewSessionId);
+  if(!s) return;
+  const items = s.items||[];
+  if(!items.length){toast('Нет позиций для экспорта', 'var(--red)');return;}
+  const date = s.createdAt ? (s.createdAt.toDate ? s.createdAt.toDate() : new Date(s.createdAt)).toLocaleDateString('ru-RU') : new Date().toLocaleDateString('ru-RU');
+  const headers = ['Код товара', 'Наименование', 'Количество', 'Единица'];
+  const rows = items.map(it => [it.code, it.name, it.qty, it.unit]);
+  const data = buildExcelBlob(headers, rows, 'Приёмка');
+  if(!data) return;
+  const fname = `Приёмка_${s.pizzeria||''}_${date}.xlsx`.replace(/[\s\/\\:*?"<>|]/g,'_');
+  downloadBlob(data, fname);
+  toast('Excel сохранён ✓', 'var(--green)');
+}
+
 /* ===== CATALOG IMPORT FROM XLSX ===== */
 function openCatXlsxPicker(){
   document.getElementById('cat-xlsx-input').click();
@@ -1391,6 +1494,60 @@ async function importCatalogFromRows(rows, filename){
   // Refresh catalog view
   const mc = document.getElementById('main-content');
   if(mc) mc.innerHTML = renderCatalogItemsHTML();
+}
+
+
+function renderSessionList(items){
+  if(items.length===0) return '<div class="empty">Нет принятых позиций</div>';
+  const q = norm(state.sessionSearchQ);
+  const filtered = q
+    ? items.filter(it => norm(it.name).includes(q) || norm(it.code).includes(q))
+    : items;
+
+  let html = `<div class="session-search-bar">
+    <input placeholder="Поиск по названию или коду…"
+      value="${state.sessionSearchQ.replace(/"/g,'&quot;')}"
+      oninput="onSessionSearch(this.value)"
+      autocomplete="off" autocorrect="off" spellcheck="false">
+  </div>`;
+
+  if(filtered.length === 0){
+    html += '<div class="empty">Ничего не найдено</div>';
+    return html;
+  }
+
+  filtered.forEach((it,i) => {
+    html += `<div class="sum-item">
+      <div class="sum-n">${i+1}.</div>
+      <div class="sum-info">
+        <div class="sum-code">${it.code}</div>
+        <div class="sum-name">${it.name}</div>
+      </div>
+      <div class="sum-qty">${it.qty} ${it.unit}</div>
+    </div>`;
+  });
+  return html;
+}
+
+function onSessionSearch(v){
+  state.sessionSearchQ = v;
+  const mc = document.getElementById('main-content') ||
+             document.querySelector('[style*="overflow-y:auto"]');
+  // Re-render just the list part
+  const s = state.sessions.find(x => x.id === state.viewSessionId);
+  if(s && !state.compareTab){
+    // Find the scrollable container and update
+    const containers = document.querySelectorAll('[style*="overflow-y:auto"]');
+    for(const c of containers){
+      if(c.querySelector('.sum-item') || c.querySelector('.empty') || c.querySelector('.session-search-bar')){
+        c.innerHTML = renderSessionList(s.items||[]);
+        // Restore focus and cursor position
+        const inp = c.querySelector('input');
+        if(inp){ inp.focus(); inp.setSelectionRange(v.length,v.length); }
+        break;
+      }
+    }
+  }
 }
 
 /* ===== COMPARE WITH INVOICE ===== */
@@ -1579,6 +1736,79 @@ function renderCompare(session){
   html += `<div style="padding:16px"><button onclick="openXlsxPicker()" class="btn btn-outline" style="font-size:13px">📂 Заменить накладную</button></div>`;
 
   return html;
+}
+
+
+/* ===== EXCEL EXPORT ===== */
+function exportAcceptedXlsx(){
+  const keys = Object.keys(state.accepted);
+  if(!keys.length){ toast('Нет принятых позиций','var(--red)'); return; }
+  const piz = state.sessionData ? state.sessionData.pizzeria : '';
+  const dateStr = new Date().toLocaleString('ru-RU');
+
+  const rows = [
+    ['ПРИЁМКА — ' + piz],
+    ['Приёмщик: ' + (currentUser ? currentUser.name : ''), 'Дата: ' + dateStr],
+    [],
+    ['№', 'Код товара', 'Наименование', 'Количество', 'Единица'],
+  ];
+
+  keys.forEach((code, i) => {
+    const p = PRODUCTS.find(x => x.c === code) || {n: code};
+    const a = state.accepted[code];
+    rows.push([i+1, code, p.n, a.qty, a.u]);
+  });
+
+  rows.push([]);
+  rows.push(['Итого позиций:', keys.length]);
+
+  downloadXlsx(rows, 'priemka_' + (piz||'dodo') + '_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  toast('Excel скачивается…', 'var(--green)');
+}
+
+function exportSessionXlsx(){
+  const s = state.sessions.find(x => x.id === state.viewSessionId);
+  if(!s){ toast('Сессия не найдена','var(--red)'); return; }
+  const items = s.items || [];
+  if(!items.length){ toast('Нет позиций','var(--red)'); return; }
+
+  const rows = [
+    ['ПРИЁМКА — ' + (s.pizzeria||'')],
+    ['Приёмщик: ' + (s.receiver||''), 'Дата: ' + (s.createdAt ? new Date(s.createdAt.seconds*1000).toLocaleString('ru-RU') : '')],
+    [],
+    ['№', 'Код товара', 'Наименование', 'Количество', 'Единица'],
+  ];
+
+  items.forEach((it, i) => {
+    rows.push([i+1, it.code, it.name, it.qty, it.unit]);
+  });
+
+  rows.push([]);
+  rows.push(['Итого позиций:', items.length]);
+
+  downloadXlsx(rows, 'priemka_' + (s.pizzeria||'dodo').replace(/\s/g,'_') + '_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  toast('Excel скачивается…', 'var(--green)');
+}
+
+function downloadXlsx(rows, filename){
+  if(typeof XLSX === 'undefined'){
+    toast('Библиотека Excel не загружена','var(--red)');
+    return;
+  }
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+
+  // Column widths
+  ws['!cols'] = [
+    {wch:4},   // №
+    {wch:14},  // Код
+    {wch:50},  // Наименование
+    {wch:12},  // Количество
+    {wch:8},   // Единица
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Приёмка');
+  XLSX.writeFile(wb, filename);
 }
 
 /* ===== COPY ===== */
