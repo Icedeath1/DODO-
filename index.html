@@ -4,6 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#FF6900">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Приёмка">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="msapplication-TileColor" content="#FF6900">
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Приёмка">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
+<link rel="apple-touch-startup-image" href="icon-512.png">
+<meta name="msapplication-TileColor" content="#FF6900">
+
 <title>Приёмка — Додо Пицца</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -207,10 +225,39 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',system-ui,-appl
 .session-search-bar input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:24px;color:var(--text);font-size:14px;font-family:inherit;padding:9px 16px 9px 38px;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238E8E93' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:12px center}
 .session-search-bar input:focus{border-color:var(--orange);background-color:var(--surface)}
 .session-search-bar input::placeholder{color:var(--text2)}
+
+#offline-bar{display:none;background:#FF3B30;color:#fff;font-size:13px;font-weight:700;text-align:center;padding:8px;letter-spacing:.3px;position:sticky;top:0;z-index:999}
+#install-pwa{display:none;position:fixed;bottom:80px;right:16px;background:#FF6900;color:#fff;border:none;border-radius:30px;padding:11px 18px;font-size:13px;font-weight:800;cursor:pointer;z-index:150;box-shadow:0 4px 20px rgba(255,105,0,.4);font-family:inherit}
+#install-pwa:active{opacity:.85}
+
+/* DESKTOP RESPONSIVE */
+@media (min-width: 768px){
+  body{background:#f0f0f0}
+  #root{box-shadow:0 0 40px rgba(0,0,0,.15);min-height:100vh}
+  .header{height:64px}
+  .item,.cat-item,.sum-item,.user-item,.audit-item,.session-card{transition:background .15s}
+  .item:hover{background:var(--orange-l)}
+  .item.done:hover{background:#d4f0dd}
+  .session-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.12)}
+  .user-item:hover{background:var(--orange-l)}
+  .btn:hover{opacity:.92}
+  .hbtn:hover,.hbtn-ghost:hover{opacity:.85}
+  .tab{font-size:13px;padding:14px 10px}
+  .screen{max-width:480px;margin:0 auto}
+  .card{border:1px solid var(--border)}
+  /* iOS install hint hidden on desktop */
+  #ios-hint{display:none!important}
+}
+@media (min-width: 1024px){
+  #root{max-width:560px}
+}
 ::-webkit-scrollbar{width:0}
 </style>
 </head>
 <body>
+<div id="offline-bar">⚠ Нет соединения — работаем офлайн</div>
+<button id="install-pwa" onclick="installPWA()">⬇ Установить приложение</button>
+<div id="offline-bar" style="display:none;background:var(--warn,#ef9f27);color:#000;font-size:12px;font-weight:700;text-align:center;padding:6px;letter-spacing:.5px">⚠ Нет соединения — работаем офлайн</div>
 <div id="root"></div>
 <div class="panel-overlay" id="overlay" onclick="closeAllPanels()"></div>
 
@@ -273,6 +320,18 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',system-ui,-appl
 </div>
 
 <div id="toast"></div>
+
+<div id="ios-hint" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid var(--orange);padding:14px 16px 28px;z-index:300;box-shadow:0 -4px 20px rgba(0,0,0,.15);max-width:520px;margin:0 auto">
+  <div style="display:flex;align-items:flex-start;gap:12px">
+    <div style="width:44px;height:44px;background:var(--orange);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🍕</div>
+    <div style="flex:1">
+      <div style="font-size:14px;font-weight:800;margin-bottom:4px">Установить приложение</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.5">Нажмите <b>Поделиться</b> <span style="font-size:16px">⬆️</span> внизу экрана, затем <b>«На экран Домой»</b></div>
+    </div>
+    <button onclick="document.getElementById('ios-hint').style.display='none';localStorage.setItem('ios-hint-dismissed','1')" style="background:none;border:none;font-size:20px;color:var(--text2);cursor:pointer;padding:0;flex-shrink:0">✕</button>
+  </div>
+</div>
+
 <input type="file" id="xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="onXlsxSelected(event)">
 <input type="file" id="cat-xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="onCatXlsxSelected(event)">
 
@@ -1936,5 +1995,108 @@ function handleBack(){
 }
 
 </script>
+
+<script>
+// Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(r => console.log('SW registered'))
+      .catch(e => console.log('SW error', e));
+  });
+}
+
+// Online/offline
+window.addEventListener('online',  () => document.getElementById('offline-bar').style.display='none');
+window.addEventListener('offline', () => document.getElementById('offline-bar').style.display='block');
+if(!navigator.onLine) document.getElementById('offline-bar').style.display='block';
+
+// PWA install prompt
+let _deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _deferredPrompt = e;
+  document.getElementById('install-pwa').style.display='block';
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-pwa').style.display='none';
+  _deferredPrompt = null;
+  if(typeof toast==='function') toast('Приложение установлено!', 'var(--green)');
+});
+function installPWA(){
+  if(_deferredPrompt){
+    _deferredPrompt.prompt();
+    _deferredPrompt.userChoice.then(() => {
+      _deferredPrompt = null;
+      document.getElementById('install-pwa').style.display='none';
+    });
+  }
+}
+</script>
+
+
+<script>
+/* PWA: Service Worker */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(r => console.log('SW registered:', r.scope))
+      .catch(e => console.log('SW error:', e));
+  });
+}
+
+/* PWA: Install prompt (Android/Desktop Chrome) */
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Show install button after login
+  setTimeout(showInstallBtn, 2000);
+});
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  const btn = document.getElementById('pwa-install-btn');
+  if(btn) btn.remove();
+});
+
+function showInstallBtn(){
+  if(!deferredInstallPrompt) return;
+  if(document.getElementById('pwa-install-btn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'pwa-install-btn';
+  btn.innerHTML = '⬇ Установить приложение';
+  btn.style.cssText = 'position:fixed;bottom:80px;right:16px;background:var(--orange);color:#fff;border:none;border-radius:30px;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;z-index:150;box-shadow:0 4px 16px rgba(255,105,0,.4);font-family:inherit';
+  btn.onclick = () => {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(() => {
+      deferredInstallPrompt = null;
+      btn.remove();
+    });
+  };
+  document.body.appendChild(btn);
+}
+
+/* PWA: iOS install hint */
+(function(){
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  const dismissed = localStorage.getItem('ios-hint-dismissed');
+  if(isIos && !isStandalone && !dismissed){
+    setTimeout(() => {
+      const hint = document.getElementById('ios-hint');
+      if(hint) hint.style.display = 'block';
+    }, 3000);
+  }
+})();
+
+/* PWA: Offline indicator */
+function updateOnlineStatus(){
+  const bar = document.getElementById('offline-bar');
+  if(bar) bar.style.display = navigator.onLine ? 'none' : 'block';
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+</script>
+
 </body>
 </html>
