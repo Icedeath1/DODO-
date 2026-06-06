@@ -685,7 +685,7 @@ const DEFAULT_PRODUCTS=[
 ];
 
 let db=null, auth=null, currentUser=null, PRODUCTS=[];
-let state={screen:'loading',tab:'list',adminTab:'sessions',sessionId:null,sessionData:null,sessions:[],accepted:{},searchQ:'',catQ:'',auditQ:'',viewSessionId:null,users:[],auditLog:[],compareTab:false,sessionSearchQ:''};
+let state={screen:'loading',tab:'list',adminTab:'sessions',sessionId:null,sessionData:null,sessions:[],accepted:{},searchQ:'',catQ:'',auditQ:'',viewSessionId:null,users:[],auditLog:[],compareTab:false,sessionSearchQ:'',sessionEditMode:false};
 let currentCode=null,panelUnit=null,unsub=null,unsubSessions=null,unsubUsers=null,unsubAudit=null;
 let editCatCode=null,cpUnit='кор',editUserId=null,upRole='receiver';
 
@@ -1129,49 +1129,261 @@ function onSessionSearch(v){
     <div class="sum-item"><div class="sum-n">${i+1}.</div><div class="sum-info"><div class="sum-code">${it.code}</div><div class="sum-name">${it.name}</div></div><div class="sum-qty">${it.qty} ${it.unit}</div></div>`).join('');
 }
 
-function viewSession(id){state.viewSessionId=id;state.screen='view-session';state.compareTab=false;state.sessionSearchQ='';render();}
+function viewSession(id){state.viewSessionId=id;state.screen='view-session';state.compareTab=false;state.sessionSearchQ='';state.sessionEditMode=false;render();}
 
 /* ===== VIEW SESSION ===== */
 function renderViewSession(r){
   const s=state.sessions.find(x=>x.id===state.viewSessionId);
   if(!s){r.innerHTML='<div class="empty">Сессия не найдена</div>';return;}
-  const items=s.items||[];const isDone=s.status==='done';
+  const items=s.items||[];
+  const isDone=s.status==='done';
+  const canEdit=(isDone)&&(currentUser.role==='admin'||currentUser.role==='manager');
+  const canFinish=(!isDone)&&(currentUser.role==='admin');
+  const em=state.sessionEditMode;
   const backFn=currentUser.role==='admin'?'goAdmin()':'goManager()';
+
+  // Search/filter for list view
+  const q=norm(state.sessionSearchQ||'');
+  const filtered=q?items.filter(it=>norm(it.name).includes(q)||norm(it.code).includes(q)):items;
+
   r.innerHTML=`
   <div style="display:flex;flex-direction:column;height:100vh;overflow:hidden">
     <div class="sdh">
-      <button class="sdh-back" onclick="${backFn}">←</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <button class="sdh-back" style="margin-bottom:0" onclick="${backFn}">←</button>
+        <div style="display:flex;gap:8px">
+          ${canFinish?`<button onclick="adminFinishSession('${s.id}')" style="background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.6);color:#fff;font-size:12px;font-weight:800;border-radius:20px;padding:6px 12px;cursor:pointer;font-family:inherit">✓ Завершить</button>`:''}
+          ${currentUser.role==='admin'?`<button onclick="adminDeleteSession('${s.id}')" style="background:rgba(255,0,0,.25);border:1.5px solid rgba(255,100,100,.6);color:#fff;font-size:12px;font-weight:800;border-radius:20px;padding:6px 12px;cursor:pointer;font-family:inherit">🗑 Удалить</button>`:''}
+          ${canEdit?`<button onclick="toggleSessionEdit()" style="background:${em?'#fff':'rgba(255,255,255,.2)'};border:1.5px solid ${em?'#fff':'rgba(255,255,255,.6)'};color:${em?'var(--orange)':'#fff'};font-size:12px;font-weight:800;border-radius:20px;padding:6px 12px;cursor:pointer;font-family:inherit">${em?'✓ Готово':'✏ Изменить'}</button>`:''}
+        </div>
+      </div>
       <div class="sdh-title">${s.pizzeria||'—'}</div>
       <div class="sdh-meta">${s.receiver||''} · ${fmtDate(s.createdAt)}</div>
-      <div class="sdh-count">${items.length} позиций ${isDone?'· Завершено':''}</div>
+      <div class="sdh-count">${items.length} позиций${isDone?' · Завершено':''}</div>
     </div>
-    <div class="tabs" style="top:0;position:sticky">
+    ${em?`<div style="padding:9px 16px;background:#FFF9E6;border-bottom:1.5px solid #FFCA28;display:flex;align-items:center;gap:8px;flex-shrink:0">
+      <span style="font-size:14px">✏</span>
+      <span style="font-size:13px;font-weight:700;color:#8a6200;flex:1">Режим редактирования</span>
+      <button onclick="openSessionAddItem()" style="background:var(--orange);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:800;padding:5px 12px;cursor:pointer;font-family:inherit">+ Добавить</button>
+    </div>`:''}
+    ${!em?`<div class="tabs" style="flex-shrink:0">
       <div class="tab${!state.compareTab?' active':''}" onclick="state.compareTab=false;render()">Список (${items.length})</div>
       <div class="tab${state.compareTab?' active':''}" onclick="state.compareTab=true;render()">Сверка с накладной</div>
-    </div>
-    ${!isDone&&!state.compareTab?`<div style="padding:10px 16px;background:var(--orange-l);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px"><span class="dot-live"></span><span style="font-size:13px;font-weight:700;color:var(--orange)">Приёмка идёт — список обновляется</span></div>`:''}
-    ${!state.compareTab?`<div id="session-search-bar" style="padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:${isDone?'58px':'100px'};z-index:4">
-      <input style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:24px;color:var(--text);font-size:14px;font-family:inherit;padding:8px 16px 8px 36px;outline:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238E8E93' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:10px center"
-        placeholder="Поиск по коду или названию…" 
-        value="${state.sessionSearchQ||''}" 
-        oninput="onSessionSearch(this.value)"
-        autocomplete="off" autocorrect="off">
     </div>`:''}
-    <div style="flex:1;overflow-y:auto">
-      ${state.compareTab
+    ${!isDone&&!em?`<div style="padding:10px 16px;background:var(--orange-l);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;flex-shrink:0"><span class="dot-live"></span><span style="font-size:13px;font-weight:700;color:var(--orange)">Приёмка идёт — список обновляется</span></div>`:''}
+    ${!state.compareTab||em?`<div style="padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0">
+      <input style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:24px;color:var(--text);font-size:14px;font-family:inherit;padding:8px 16px 8px 36px;outline:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill=%22none%22 stroke=%22%238E8E93%22 stroke-width=%222%22 viewBox=%220 0 24 24%22%3E%3Ccircle cx=%2211%22 cy=%2211%22 r=%228%22/%3E%3Cpath d=%22m21 21-4.35-4.35%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:10px center"
+        placeholder="Поиск по коду или названию…"
+        value="${(state.sessionSearchQ||'').replace(/"/g,'&quot;')}"
+        oninput="onSessionSearch(this.value)"
+        autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>`:''}
+    <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch">
+      ${(state.compareTab&&!em)
         ? renderCompare(s)
-        : (()=>{
-            const q=norm(state.sessionSearchQ||'')||''
-            const filtered=q?items.filter(it=>norm(it.name).includes(q)||norm(it.code).includes(q)):items
-            if(!filtered.length) return '<div class="empty">'+(items.length?'Ничего не найдено':'Нет принятых позиций')+'</div>'
-            return filtered.map((it,i)=>`
-              <div class="sum-item"><div class="sum-n">${i+1}.</div><div class="sum-info"><div class="sum-code">${it.code}</div><div class="sum-name">${it.name}</div></div><div class="sum-qty">${it.qty} ${it.unit}</div></div>`).join('')
-          })()
+        : filtered.length===0
+          ? '<div class="empty">'+(items.length?'Ничего не найдено':'Нет принятых позиций')+'</div>'
+          : filtered.map((it,i)=>`
+            <div class="sum-item" style="${em?'cursor:pointer;':''}${em?'background:var(--surface)':''}" ${em?`onclick="openSessionEditItem('${it.code}',${it.qty},'${it.unit}')"`:''}">
+              <div class="sum-n">${i+1}.</div>
+              <div class="sum-info"><div class="sum-code">${it.code}</div><div class="sum-name">${it.name}</div></div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div class="sum-qty">${it.qty} ${it.unit}</div>
+                ${em?`<div style="width:28px;height:28px;border-radius:8px;background:var(--orange-l);display:flex;align-items:center;justify-content:center;color:var(--orange);font-size:14px;flex-shrink:0">✎</div>`:''}
+              </div>
+            </div>`).join('')
       }
     </div>
-    ${!state.compareTab&&items.length?`<div class="bottom-bar" style="display:flex;gap:8px"><button class="btn btn-primary" style="flex:2" onclick="copySessionResult()">📋 Скопировать</button><button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="exportSessionExcel()">📊 Excel</button></div>`:''}
+    ${!state.compareTab&&!em&&items.length?`<div class="bottom-bar" style="display:flex;gap:8px">
+      <button class="btn btn-primary" style="flex:2" onclick="copySessionResult()">📋 Скопировать</button>
+      <button class="btn btn-secondary" style="flex:1;font-size:13px" onclick="exportSessionXlsx()">📊 Excel</button>
+    </div>`:''}
   </div>`;
 }
+
+/* ===== SESSION EDIT (manager/admin) ===== */
+function toggleSessionEdit(){
+  state.sessionEditMode = !state.sessionEditMode;
+  state.sessionSearchQ = '';
+  render();
+}
+
+
+async function adminDeleteSession(id){
+  const s=state.sessions.find(x=>x.id===id);
+  const name=s?s.pizzeria:'эту приёмку';
+  if(!confirm(`Удалить приёмку "${name}"?\n\nДействие необратимо — все данные будут удалены.`)) return;
+  try{
+    await logAudit('session_delete',`Администратор удалил приёмку: ${name}`);
+    await db.collection('sessions').doc(id).delete();
+    toast('Приёмка удалена','var(--green)');
+    if(currentUser.role==='admin') goAdmin();
+    else goManager();
+  }catch(e){toast('Ошибка: '+e.message,'var(--red)');}
+}
+
+async function adminFinishSession(id){
+  if(!confirm('Завершить эту приёмку от имени администратора?')) return;
+  try{
+    await db.collection('sessions').doc(id).update({
+      status:'done',
+      finishedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      finishedBy:currentUser.name+' (admin)'
+    });
+    await logAudit('session_finish', `Администратор завершил приёмку: ${state.sessions.find(s=>s.id===id)?.pizzeria||id}`);
+    toast('Приёмка завершена ✓','var(--green)');
+    state.sessionEditMode=false;
+    render();
+  }catch(e){toast('Ошибка: '+e.message,'var(--red)');}
+}
+
+// Edit item in completed session
+let editSessionItemCode=null;
+
+function openSessionEditItem(code, qty, unit){
+  editSessionItemCode=code;
+  const s=state.sessions.find(x=>x.id===state.viewSessionId);
+  const item=s?(s.items||[]).find(it=>it.code===code):null;
+  document.getElementById('p-name').textContent=item?item.name:code;
+  document.getElementById('p-code').textContent=code;
+  document.getElementById('p-qty').value=qty||'';
+  panelUnit=unit||'кор';
+  renderUnits();
+  document.getElementById('p-del').style.display='block';
+  document.getElementById('p-del').onclick=deleteSessionItem;
+  document.getElementById('p-del').textContent='Удалить';
+  // Override save button
+  document.querySelector('#panel .btn-ok').onclick=saveSessionItem;
+  showPanel('panel');
+  setTimeout(()=>document.getElementById('p-qty').focus(),150);
+}
+
+async function saveSessionItem(){
+  const v=parseFloat(document.getElementById('p-qty').value);
+  if(!v||v<=0){document.getElementById('p-qty').focus();return;}
+  const s=state.sessions.find(x=>x.id===state.viewSessionId);
+  if(!s)return;
+  const items=[...(s.items||[])];
+  const idx=items.findIndex(it=>it.code===editSessionItemCode);
+  if(idx!==-1){
+    items[idx]={...items[idx],qty:v,unit:panelUnit||'кор'};
+  }
+  try{
+    await db.collection('sessions').doc(s.id).update({
+      items,
+      editedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      editedBy:currentUser.name
+    });
+    await logAudit('session_edit',`${currentUser.name} изменил позицию ${editSessionItemCode} в приёмке: ${s.pizzeria||s.id}`);
+    toast('Сохранено ✓','var(--green)');
+  }catch(e){toast('Ошибка: '+e.message,'var(--red)');}
+  // Restore default save behaviour
+  document.querySelector('#panel .btn-ok').onclick=saveItem;
+  closeAllPanels();
+}
+
+async function deleteSessionItem(){
+  const s=state.sessions.find(x=>x.id===state.viewSessionId);
+  if(!s||!confirm('Удалить позицию из этой приёмки?'))return;
+  const items=(s.items||[]).filter(it=>it.code!==editSessionItemCode);
+  try{
+    await db.collection('sessions').doc(s.id).update({
+      items,
+      editedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      editedBy:currentUser.name
+    });
+    await logAudit('session_edit',`${currentUser.name} удалил позицию ${editSessionItemCode} из приёмки: ${s.pizzeria||s.id}`);
+    toast('Удалено','var(--green)');
+  }catch(e){toast('Ошибка: '+e.message,'var(--red)');}
+  document.querySelector('#panel .btn-ok').onclick=saveItem;
+  closeAllPanels();
+}
+
+// Add new item to completed session
+function openSessionAddItem(){
+  // Show a search-based picker: reuse catalog but in "add to session" mode
+  state.sessionAddMode=true;
+  state.sessionSearchQ='';
+  // Render a full-screen picker overlay
+  const overlay=document.createElement('div');
+  overlay.id='add-item-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:var(--bg);z-index:200;display:flex;flex-direction:column;max-width:520px;left:50%;transform:translateX(-50%)';
+  overlay.innerHTML=`
+    <div style="background:var(--orange);padding:14px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0">
+      <button onclick="closeAddItemOverlay()" style="background:rgba(255,255,255,.2);border:none;color:#fff;font-size:22px;width:36px;height:36px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;">←</button>
+      <span style="color:#fff;font-size:15px;font-weight:800">Добавить позицию</span>
+    </div>
+    <div style="padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0">
+      <input id="add-item-search" style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:24px;color:var(--text);font-size:14px;font-family:inherit;padding:9px 16px 9px 36px;outline:none" placeholder="Поиск по коду или названию…" oninput="renderAddItemList(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div id="add-item-list" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
+  `;
+  document.body.appendChild(overlay);
+  renderAddItemList('');
+  setTimeout(()=>document.getElementById('add-item-search')?.focus(),150);
+}
+
+function renderAddItemList(q){
+  const s=state.sessions.find(x=>x.id===state.viewSessionId);
+  const existing=new Set((s?.items||[]).map(it=>it.code));
+  const nq=norm(q);
+  const filtered=nq?PRODUCTS.filter(p=>norm(p.n).includes(nq)||norm(p.c).includes(nq)):PRODUCTS;
+  const ini=p=>{const w=p.n.split(' ');return(w[0][0]+(w[1]?w[1][0]:'')).toUpperCase()};
+  const list=document.getElementById('add-item-list');
+  if(!list)return;
+  let html='';
+  filtered.forEach(p=>{
+    const inList=existing.has(p.c);
+    html+=`<div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);background:${inList?'var(--green-l)':'var(--surface)'};cursor:${inList?'default':'pointer'}" ${inList?'':`onclick="selectAddItem('${p.c.replace(/'/g,"\\'")}')"`}>
+      <div style="width:36px;height:36px;border-radius:10px;background:${inList?'var(--green)':'var(--orange-l)'};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:${inList?'#fff':'var(--orange)'};flex-shrink:0;font-family:monospace;margin-right:12px">${inList?'✓':ini(p)}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:10px;color:var(--text2);font-family:monospace">${p.c}</div><div style="font-size:14px;font-weight:600;line-height:1.3">${p.n}</div></div>
+      ${inList?`<span style="font-size:11px;color:var(--green);font-weight:700">Уже есть</span>`:`<div style="color:var(--text2);font-size:18px">›</div>`}
+    </div>`;
+  });
+  if(!filtered.length) html='<div class="empty">Ничего не найдено</div>';
+  list.innerHTML=html;
+}
+
+function closeAddItemOverlay(){
+  const el=document.getElementById('add-item-overlay');
+  if(el)el.remove();
+}
+
+function selectAddItem(code){
+  closeAddItemOverlay();
+  const p=PRODUCTS.find(x=>x.c===code)||{n:code,u:'кор'};
+  editSessionItemCode=code;
+  document.getElementById('p-name').textContent=p.n;
+  document.getElementById('p-code').textContent=code;
+  document.getElementById('p-qty').value='';
+  panelUnit=p.u||'кор';
+  renderUnits();
+  document.getElementById('p-del').style.display='none';
+  document.querySelector('#panel .btn-ok').onclick=addNewSessionItem;
+  showPanel('panel');
+  setTimeout(()=>document.getElementById('p-qty').focus(),150);
+}
+
+async function addNewSessionItem(){
+  const v=parseFloat(document.getElementById('p-qty').value);
+  if(!v||v<=0){document.getElementById('p-qty').focus();return;}
+  const s=state.sessions.find(x=>x.id===state.viewSessionId);
+  if(!s)return;
+  const p=PRODUCTS.find(x=>x.c===editSessionItemCode)||{n:editSessionItemCode};
+  const items=[...(s.items||[]),{code:editSessionItemCode,name:p.n,qty:v,unit:panelUnit||'кор'}];
+  try{
+    await db.collection('sessions').doc(s.id).update({
+      items,
+      editedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      editedBy:currentUser.name
+    });
+    await logAudit('session_edit',`${currentUser.name} добавил позицию ${editSessionItemCode} в приёмку: ${s.pizzeria||s.id}`);
+    toast('Добавлено ✓','var(--green)');
+  }catch(e){toast('Ошибка: '+e.message,'var(--red)');}
+  document.querySelector('#panel .btn-ok').onclick=saveItem;
+  closeAllPanels();
+}
+
 function goManager(){state.screen='manager';if(!unsubSessions)subscribeManager();render();}
 function goAdmin(){state.screen='admin';render();}
 
