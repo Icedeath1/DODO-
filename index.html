@@ -2115,6 +2115,15 @@ function subscribeSession(id){
 }
 
 /* ===== FIREBASE INIT ===== */
+
+function withTimeout(promise, ms){
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Timeout: нет ответа от Firebase')), ms);
+    promise.then(v => { clearTimeout(timer); resolve(v); })
+           .catch(e => { clearTimeout(timer); reject(e); });
+  });
+}
+
 function initFirebase(cfg){
   try{
     if(!firebase.apps.length)firebase.initializeApp(cfg);
@@ -2125,7 +2134,7 @@ function initFirebase(cfg){
     auth.onAuthStateChanged(async user=>{
       if(user){
         try{
-          const doc=await db.collection('users').doc(user.uid).get();
+          const doc=await withTimeout(db.collection('users').doc(user.uid).get(), 8000);
           if(doc.exists){
             const data=doc.data();
             if(data.active===false){
@@ -2137,11 +2146,20 @@ function initFirebase(cfg){
             await logAudit('login',`${currentUser.name} вошёл в систему`);
             routeByRole();
           }else{await auth.signOut();state.screen='login';render();}
-        }catch(e){state.screen='login';render();}
+        }catch(e){
+          console.warn('Auth error:',e);
+          state.screen='login';render();
+        }
       }else{
         state.screen='loading';render();
-        const snap=await db.collection('users').limit(1).get();
-        state.screen=snap.empty?'first-setup':'login';render();
+        try{
+          const snap=await withTimeout(db.collection('users').limit(1).get(), 8000);
+          state.screen=snap.empty?'first-setup':'login';render();
+        }catch(e){
+          console.warn('Users check error:',e.message);
+          // Если ошибка доступа — пользователи уже есть, показываем логин
+          state.screen='login';render();
+        }
       }
     });
   }catch(e){toast('Ошибка Firebase: '+e.message,'var(--red)');state.screen='setup';render();}
