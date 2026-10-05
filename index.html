@@ -334,6 +334,7 @@ body{background:var(--bg);color:var(--text);font-family:'Nunito',system-ui,-appl
 
 <input type="file" id="xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="onXlsxSelected(event)">
 <input type="file" id="cat-xlsx-input" accept=".xlsx,.xls" style="display:none" onchange="onCatXlsxSelected(event)">
+<input type="file" id="cat-photo-input" accept="image/*" capture="environment" style="display:none" onchange="onCatPhotoSelected(event)">
 
 <script>
 function loadScript(src){
@@ -1007,9 +1008,14 @@ function renderCatalogItemsHTML(){
   let html='';
   html+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border)">
     <div style="font-size:13px;font-weight:700;color:var(--text2)">${filtered.length} позиций</div>
-    <button onclick="openCatXlsxPicker()" style="background:var(--orange-l);border:1.5px solid var(--orange);color:var(--orange-d);border-radius:10px;font-size:12px;font-weight:800;padding:7px 12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px">
-      📂 Загрузить из xlsx
+<div style="display:flex;gap:6px">
+    <button onclick="openCatXlsxPicker()" style="background:var(--orange-l);border:1.5px solid var(--orange);color:var(--orange-d);border-radius:10px;font-size:12px;font-weight:800;padding:7px 10px;cursor:pointer;font-family:inherit">
+      📂 xlsx
     </button>
+    <button onclick="document.getElementById('cat-photo-input').click()" style="background:var(--blue-l);border:1.5px solid var(--blue);color:#0055cc;border-radius:10px;font-size:12px;font-weight:800;padding:7px 10px;cursor:pointer;font-family:inherit">
+      📷 Фото
+    </button>
+  </div>
   </div>`;
   filtered.forEach(p=>{
     html+=`<div class="cat-item">
@@ -1656,6 +1662,91 @@ function exportSessionExcel(){
   const fname = `Приёмка_${s.pizzeria||''}_${date}.xlsx`.replace(/[\s\/\\:*?"<>|]/g,'_');
   downloadBlob(data, fname);
   toast('Excel сохранён ✓', 'var(--green)');
+}
+
+
+/* ===== PHOTO OCR → CATALOG ===== */
+async function onCatPhotoSelected(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  e.target.value = '';
+
+  toast('Анализируем фото…', 'var(--blue)');
+
+  try{
+    // Convert to base64
+    const base64 = await new Promise((res, rej) => {
+      const reader = new FileReader();
+      reader.onload = () => res(reader.result.split(',')[1]);
+      reader.onerror = rej;
+      reader.readAsDataURL(file);
+    });
+
+    const mediaType = file.type || 'image/jpeg';
+
+    // Call Anthropic API
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {type: 'base64', media_type: mediaType, data: base64}
+            },
+            {
+              type: 'text',
+              text: `Это фото товарного ярлыка, этикетки или накладной из системы Додо Пицца.
+Найди и извлеки:
+1. Код товара в формате DDI_XXXXXX (если есть)
+2. Название товара
+3. Единицу измерения (кор/бл/шт/кг/уп/л/рол — выбери подходящую)
+
+Ответь ТОЛЬКО в формате JSON без markdown, например:
+{"code":"DDI_001234","name":"Название товара","unit":"кор"}
+
+Если код DDI не виден — оставь поле code пустым: {"code":"","name":"Название","unit":"кор"}
+Если ничего не удаётся распознать — верни: {"error":"не удалось распознать"}`
+            }
+          ]
+        }]
+      })
+    });
+
+    if(!response.ok){
+      const err = await response.text();
+      throw new Error('API error: ' + err);
+    }
+
+    const data = await response.json();
+    const text = (data.content||[]).find(c=>c.type==='text')?.text || '';
+
+    let parsed;
+    try{ parsed = JSON.parse(text.trim()); }
+    catch(e){ throw new Error('Не удалось разобрать ответ: ' + text); }
+
+    if(parsed.error){ toast('Не удалось распознать: ' + parsed.error, 'var(--red)'); return; }
+
+    // Pre-fill catalog form
+    openCatPanel(null);
+    setTimeout(() => {
+      if(parsed.code) document.getElementById('cp-code').value = parsed.code.toUpperCase();
+      if(parsed.name) document.getElementById('cp-name').value = parsed.name;
+      if(parsed.unit && UNITS.includes(parsed.unit)){
+        cpUnit = parsed.unit;
+        renderCpUnits();
+      }
+      toast('Данные из фото заполнены — проверьте и сохраните', 'var(--green)');
+    }, 300);
+
+  }catch(err){
+    console.error('OCR error:', err);
+    toast('Ошибка распознавания: ' + err.message, 'var(--red)');
+  }
 }
 
 /* ===== CATALOG IMPORT FROM XLSX ===== */
