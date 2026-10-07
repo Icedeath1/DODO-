@@ -350,7 +350,6 @@ async function loadFirebase(){
     await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js');
     await loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js');
     await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js');
     boot();
   }catch(e){
     document.getElementById('root').innerHTML=`
@@ -1674,9 +1673,14 @@ async function onCatPhotoSelected(e){
   if(!file) return;
   e.target.value = '';
 
+  // Lazy-load Tesseract on first use
   if(typeof Tesseract === 'undefined'){
-    toast('OCR-библиотека не загружена, попробуйте перезагрузить страницу', 'var(--red)');
-    return;
+    try{
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js');
+    }catch(e){
+      toast('Не удалось загрузить OCR — проверьте интернет', 'var(--red)');
+      return;
+    }
   }
 
   // Revoke previous URL
